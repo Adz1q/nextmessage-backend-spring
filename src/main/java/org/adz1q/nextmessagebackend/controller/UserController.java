@@ -4,11 +4,9 @@ import org.adz1q.nextmessagebackend.model.User;
 import org.adz1q.nextmessagebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/db/user")
 public class UserController {
@@ -22,5 +20,10 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<Object> register(@RequestBody User user) {
         return userService.register(user);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Object> login(@RequestBody UserService.LoginRequest loginRequest) {
+        return userService.login(loginRequest);
     }
 }
