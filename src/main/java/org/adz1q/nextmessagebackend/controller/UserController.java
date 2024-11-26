@@ -26,4 +26,9 @@ public class UserController {
     public ResponseEntity<Object> login(@RequestBody UserService.LoginRequest loginRequest) {
         return userService.login(loginRequest);
     }
+
+    @GetMapping("/get/{login}")
+    public ResponseEntity<Object> getUser(@PathVariable String login) {
+        return userService.getUser(login);
+    }
 }

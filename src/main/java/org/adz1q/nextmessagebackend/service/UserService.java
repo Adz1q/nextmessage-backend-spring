@@ -36,11 +36,11 @@ public class UserService {
     }
 
     public static class LoginRequest {
-        private String username;
+        private String login;
         private String password;
 
-        public String getUsername() {
-            return username;
+        public String getLogin() {
+            return login;
         }
 
         public String getPassword() {
@@ -49,14 +49,23 @@ public class UserService {
     }
 
     public ResponseEntity<Object> register(User user) {
-        Optional<User> optionalUser = userRepository.findByUsername(user.getUsername());
+        Optional<User> optionalUsername = userRepository.findByUsername(user.getUsername());
+        Optional<User> optionalEmail = userRepository.findByEmail(user.getEmail());
 
-        if(!optionalUser.isEmpty()) {
+        if(!optionalUsername.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists!");
+        }
+
+        if(!optionalEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists!");
         }
 
         if(user.getUsername().length() < 4 || user.getUsername().length() > 20) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters!");
+        }
+
+        if(user.getEmail().length() < 8 || user.getEmail().length() > 50) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 8 and 50 characters");
         }
 
         if(user.getPassword().length() < 5 || user.getPassword().length() > 32) {
@@ -70,20 +79,50 @@ public class UserService {
     }
 
     public ResponseEntity<Object> login(LoginRequest loginRequest) {
-        Optional<User> optionalUser = userRepository.findByUsername(loginRequest.getUsername());
+        Optional<User> optionalUsername = userRepository.findByUsername(loginRequest.getLogin());
+        Optional<User> optionalEmail = userRepository.findByEmail(loginRequest.getLogin());
 
-        if(optionalUser.isEmpty()) {
+        if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid username or password!");
+        }
+
+        User user = null;
+
+        if(!optionalUsername.isEmpty()) {
+            user = optionalUsername.get();
+        }
+
+        if(!optionalEmail.isEmpty()) {
+            user = optionalEmail.get();
+        }
+
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password!");
+        }
+
+        String token = jwtService.generateToken(user.getUsername());
+
+        return ResponseEntity.ok(new JwtResponse(token));
+    }
+
+    public ResponseEntity<Object> getUser(String login) {
+        Optional<User> optionalUsername = userRepository.findByUsername(login);
+        Optional<User> optionalEmail = userRepository.findByEmail(login);
+
+        if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found!");
         }
 
-        User user = optionalUser.get();
+        User user = null;
 
-        if(!user.getUsername().equals(loginRequest.getUsername()) || !user.getPassword().equals(passwordEncoder.encode(loginRequest.getPassword()))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials!");
+        if(!optionalUsername.isEmpty()) {
+            user = optionalUsername.get();
         }
 
-        String token = jwtService.generateToken(loginRequest.getUsername());
+        if(!optionalEmail.isEmpty()) {
+            user = optionalEmail.get();
+        }
 
-        return ResponseEntity.ok(new JwtResponse(token));
+        return ResponseEntity.ok(user);
     }
 }
