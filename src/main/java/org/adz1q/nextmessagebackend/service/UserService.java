@@ -64,7 +64,7 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters!");
         }
 
-        if(user.getEmail().length() < 8 || user.getEmail().length() > 50) {
+        if(user.getEmail().length() < 4 || user.getEmail().length() > 50) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 8 and 50 characters");
         }
 
