@@ -1,20 +1,23 @@
-HELP.md
+# Maven build output
 target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+build/
 
-### STS ###
+# Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# IDEs and editors
+### Eclipse/STS ###
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -25,9 +28,28 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+### Visual Studio Code ###
 .vscode/
+
+# Logs
+*.log
+
+# Test output
+/surefire-reports/
+/failsafe-reports/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*.~*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Generated metadata
+/target/
+/build/
