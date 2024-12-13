@@ -83,7 +83,7 @@ public class UserService {
         Optional<User> optionalEmail = userRepository.findByEmail(loginRequest.getLogin());
 
         if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid username or password!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid login or password!");
         }
 
         User user = null;
@@ -97,7 +97,7 @@ public class UserService {
         }
 
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login or password!");
         }
 
         String token = jwtService.generateToken(user.getUsername());
