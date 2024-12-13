@@ -53,23 +53,23 @@ public class UserService {
         Optional<User> optionalEmail = userRepository.findByEmail(user.getEmail());
 
         if(!optionalUsername.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists");
         }
 
         if(!optionalEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already exists");
         }
 
         if(user.getUsername().length() < 4 || user.getUsername().length() > 20) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters");
         }
 
         if(user.getEmail().length() < 4 || user.getEmail().length() > 50) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 4 and 50 characters!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 4 and 50 characters");
         }
 
         if(user.getPassword().length() < 5 || user.getPassword().length() > 32) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -83,7 +83,7 @@ public class UserService {
         Optional<User> optionalEmail = userRepository.findByEmail(loginRequest.getLogin());
 
         if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid login or password!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid login or password");
         }
 
         User user = null;
@@ -97,7 +97,7 @@ public class UserService {
         }
 
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login or password!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login or password");
         }
 
         String token = jwtService.generateToken(user.getUsername());
@@ -110,7 +110,7 @@ public class UserService {
         Optional<User> optionalEmail = userRepository.findByEmail(login);
 
         if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
         User user = null;
