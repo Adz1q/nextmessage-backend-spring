@@ -1,6 +1,5 @@
 package org.adz1q.nextmessagebackend.service;
 
-import org.adz1q.nextmessagebackend.enums.FriendshipRequestStatus;
 import org.adz1q.nextmessagebackend.model.FriendshipRequest;
 import org.adz1q.nextmessagebackend.model.User;
 import org.adz1q.nextmessagebackend.repository.FriendshipRepository;
@@ -76,7 +75,6 @@ public class FriendshipRequestService {
         }
 
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
-        friendshipRequest.setStatus(FriendshipRequestStatus.REJECTED);
         friendshipRepository.deleteById(friendshipRequest.getId());
 
         return ResponseEntity.ok().body("Friendship request rejected!");
@@ -90,7 +88,6 @@ public class FriendshipRequestService {
         }
 
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
-        friendshipRequest.setStatus(FriendshipRequestStatus.ACCEPTED);
         friendshipRequestRepository.deleteById(friendshipRequest.getId());
 
         return friendshipService.addFriend(senderId, receiverId);

@@ -2,7 +2,6 @@ package org.adz1q.nextmessagebackend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.adz1q.nextmessagebackend.enums.FriendshipRequestStatus;
 
 import java.time.LocalDateTime;
 
@@ -15,8 +14,6 @@ public class FriendshipRequest {
     private int id;
     private int senderId;
     private int receiverId;
-    @Column(name = "status", nullable = false, updatable = true, columnDefinition = "VARCHAR(255) DEFAULT 'PENDING'")
-    private FriendshipRequestStatus status;
     @Column(name = "date", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime date;
 }
