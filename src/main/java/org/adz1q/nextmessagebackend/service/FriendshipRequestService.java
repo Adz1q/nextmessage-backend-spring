@@ -16,19 +16,16 @@ import java.util.Optional;
 @Service
 public class FriendshipRequestService {
     private final FriendshipService friendshipService;
-    private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
     private final FriendshipRequestRepository friendshipRequestRepository;
 
     @Autowired
     public FriendshipRequestService(
             FriendshipService friendshipService,
-            FriendshipRepository friendshipRepository,
             UserRepository userRepository,
             FriendshipRequestRepository friendshipRequestRepository
     ) {
         this.friendshipService = friendshipService;
-        this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
         this.friendshipRequestRepository = friendshipRequestRepository;
     }
@@ -75,7 +72,7 @@ public class FriendshipRequestService {
         }
 
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
-        friendshipRepository.deleteById(friendshipRequest.getId());
+        friendshipRequestRepository.deleteById(friendshipRequest.getId());
 
         return ResponseEntity.ok().body("Friendship request rejected!");
     }
