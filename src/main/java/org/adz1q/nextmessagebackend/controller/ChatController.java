@@ -15,15 +15,16 @@ public class ChatController {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     // Trzeba będzie dodać tu simpMessagingTemplate.convertAndSendToUser(message.getReceiverTeamName(), "/private", message); bo to wysyła na prywatny kanał i usunac @SendTo
-    @MessageMapping("/message")
-    @SendTo("/team/public")
+    @MessageMapping("/teamMessage")
+    @SendTo("/dashboard/teamChat")
     private Message recievePublicMessage(@Payload Message message) {
         return message;
     }
 
-    @MessageMapping("/privateMessage")
-    private Message recievePrivateMessage(@Payload Message message) {
-        simpMessagingTemplate.convertAndSendToUser(message.getReceiverName(), "/private", message);
-        return message;
-    }
+//    @MessageMapping("/privateMessage")
+//    private Message receivePrivateMessage(@Payload Message message) {
+//        String destination = "/dashboard/privateChat/" + message.getChatId();
+//        simpMessagingTemplate.convertAndSendToUser(destination, message);
+//        return message;
+//    }
 }

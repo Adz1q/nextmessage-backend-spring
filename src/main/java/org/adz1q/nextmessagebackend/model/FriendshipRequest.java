@@ -2,21 +2,20 @@ package org.adz1q.nextmessagebackend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.adz1q.nextmessagebackend.enums.MessageStatus;
+import org.adz1q.nextmessagebackend.enums.FriendshipRequestStatus;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "message")
-public class Message {
+@Table(name = "friendshipRequest")
+public class FriendshipRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
-    private int chatId;
     private int senderId;
-    private String content;
-    private MessageStatus status;
+    private int receiverId;
+    private FriendshipRequestStatus status;
     @Column(name = "date", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime date;
 }
