@@ -1,8 +1,8 @@
 package org.adz1q.nextmessagebackend.service;
 
+import lombok.Data;
 import org.adz1q.nextmessagebackend.model.FriendshipRequest;
 import org.adz1q.nextmessagebackend.model.User;
-import org.adz1q.nextmessagebackend.repository.FriendshipRepository;
 import org.adz1q.nextmessagebackend.repository.FriendshipRequestRepository;
 import org.adz1q.nextmessagebackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,42 +31,67 @@ public class FriendshipRequestService {
         this.friendshipRequestRepository = friendshipRequestRepository;
     }
 
-    public ResponseEntity<Object> addFriendshipRequest(int senderId, int receiverId) {
-        Optional<User> sender = userRepository.findById(senderId);
-        Optional<User> receiver = userRepository.findById(receiverId);
+    @Data
+    public static class SendFriendshipRequestDto {
+        private int senderId;
+        private int receiverId;
+    }
+
+    @Data
+    public static class RejectFriendshipRequestDto {
+        private int senderId;
+        private int receiverId;
+    }
+
+    @Data
+    public static class AcceptFriendshipRequestDto {
+        private int senderId;
+        private int receiverId;
+    }
+
+    public ResponseEntity<Object> sendFriendshipRequest(SendFriendshipRequestDto sendFriendshipRequestDto) {
+        Optional<User> sender = userRepository.findById(sendFriendshipRequestDto.getSenderId());
+        Optional<User> receiver = userRepository.findById(sendFriendshipRequestDto.getReceiverId());
 
         if (sender.isEmpty() || receiver.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Receiver or sender not found!");
         }
 
-        if (senderId == receiverId) {
+        if (sendFriendshipRequestDto.getSenderId() == sendFriendshipRequestDto.getReceiverId()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You can't send a friendship request to yourself!");
         }
 
-        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId);
+        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(
+                sendFriendshipRequestDto.getSenderId(),
+                sendFriendshipRequestDto.getReceiverId()
+        );
 
         if (!optionalFriendshipRequest.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Friendship request already sent!");
         }
 
-        List<User> receiverFriends = (List<User>) friendshipService.getFriends(receiverId);
+        List<FriendshipService.Friend> receiverFriends = friendshipService.getFriends(sendFriendshipRequestDto.getReceiverId());
 
-        for (User receiverFriend : receiverFriends) {
-            if (receiverFriend.getId() == senderId) {
+        for (FriendshipService.Friend receiverFriend : receiverFriends) {
+            if (receiverFriend.getId() == sendFriendshipRequestDto.getSenderId()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already friends!");
             }
         }
 
         FriendshipRequest friendshipRequest = new FriendshipRequest();
-        friendshipRequest.setSenderId(senderId);
-        friendshipRequest.setReceiverId(receiverId);
+        friendshipRequest.setSenderId(sendFriendshipRequestDto.getSenderId());
+        friendshipRequest.setReceiverId(sendFriendshipRequestDto.getReceiverId());
+        friendshipRequest.setDate(LocalDateTime.now());
         friendshipRequestRepository.save(friendshipRequest);
 
         return ResponseEntity.ok().body("Friendship request sent!");
     }
 
-    public ResponseEntity<Object> rejectFriendshipRequest(int senderId, int receiverId) {
-        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId);
+    public ResponseEntity<Object> rejectFriendshipRequest(RejectFriendshipRequestDto rejectFriendshipRequestDto) {
+        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(
+                rejectFriendshipRequestDto.getSenderId(),
+                rejectFriendshipRequestDto.getReceiverId()
+        );
 
         if (optionalFriendshipRequest.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Friendship request not found!");
@@ -77,8 +103,11 @@ public class FriendshipRequestService {
         return ResponseEntity.ok().body("Friendship request rejected!");
     }
 
-    public ResponseEntity<Object> acceptFriendshipRequest(int senderId, int receiverId) {
-        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId);
+    public ResponseEntity<Object> acceptFriendshipRequest(AcceptFriendshipRequestDto acceptFriendshipRequestDto) {
+        Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(
+                acceptFriendshipRequestDto.getSenderId(),
+                acceptFriendshipRequestDto.getReceiverId()
+        );
 
         if (optionalFriendshipRequest.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Friendship request not found!");
@@ -87,6 +116,13 @@ public class FriendshipRequestService {
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
         friendshipRequestRepository.deleteById(friendshipRequest.getId());
 
-        return friendshipService.addFriend(senderId, receiverId);
+        return friendshipService.addFriend(
+                acceptFriendshipRequestDto.getSenderId(),
+                acceptFriendshipRequestDto.getReceiverId()
+        );
+    }
+
+    public List<FriendshipRequest> getFriendshipRequests(int receiverId) {
+        return friendshipRequestRepository.findByReceiverId(receiverId);
     }
 }

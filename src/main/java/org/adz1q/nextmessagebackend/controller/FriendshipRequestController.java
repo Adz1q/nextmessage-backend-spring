@@ -1,0 +1,40 @@
+package org.adz1q.nextmessagebackend.controller;
+
+import org.adz1q.nextmessagebackend.model.FriendshipRequest;
+import org.adz1q.nextmessagebackend.service.FriendshipRequestService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/db/friendshipRequest")
+public class FriendshipRequestController {
+    private final FriendshipRequestService friendshipRequestService;
+
+    @Autowired
+    public FriendshipRequestController(FriendshipRequestService friendshipRequestService) {
+        this.friendshipRequestService = friendshipRequestService;
+    }
+
+    @PostMapping("/send")
+    public ResponseEntity<Object> sendFriendshipRequest(@RequestBody FriendshipRequestService.SendFriendshipRequestDto sendFriendshipRequestDto) {
+        return friendshipRequestService.sendFriendshipRequest(sendFriendshipRequestDto);
+    }
+
+    @PostMapping("/accept")
+    public ResponseEntity<Object> acceptFriendshipRequest(@RequestBody FriendshipRequestService.AcceptFriendshipRequestDto acceptFriendshipRequestDto) {
+        return friendshipRequestService.acceptFriendshipRequest(acceptFriendshipRequestDto);
+    }
+
+    @DeleteMapping("/reject")
+    public ResponseEntity<Object> rejectFriendshipRequest(@RequestBody FriendshipRequestService.RejectFriendshipRequestDto rejectFriendshipRequestDto) {
+        return friendshipRequestService.rejectFriendshipRequest(rejectFriendshipRequestDto);
+    }
+
+    @GetMapping("/getAll/{receiverId}")
+    public List<FriendshipRequest> getFriendshipRequests(@PathVariable int receiverId) {
+        return friendshipRequestService.getFriendshipRequests(receiverId);
+    }
+}

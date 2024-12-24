@@ -1,5 +1,6 @@
 package org.adz1q.nextmessagebackend.service;
 
+import lombok.Data;
 import org.adz1q.nextmessagebackend.model.Friendship;
 import org.adz1q.nextmessagebackend.model.FriendshipMember;
 import org.adz1q.nextmessagebackend.model.User;
@@ -9,7 +10,9 @@ import org.adz1q.nextmessagebackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,10 +34,20 @@ public class FriendshipService {
         this.friendshipMemberRepository = friendshipMemberRepository;
     }
 
+    @Data
+    public static class Friend {
+        private int id;
+        private String username;
+        private String profilePictureUrl;
+        private int friendshipId;
+        private LocalDateTime date;
+    }
+
     public ResponseEntity<Object> addFriend(int senderId, int receiverId) {
         Friendship friendship = new Friendship();
-        int friendshipId = friendship.getId();
+        friendship.setDate(LocalDateTime.now());
         friendshipRepository.save(friendship);
+        int friendshipId = friendship.getId();
 
         FriendshipMember friendshipMemberOne = new FriendshipMember();
         friendshipMemberOne.setFriendshipId(friendshipId);
@@ -49,6 +62,7 @@ public class FriendshipService {
         return ResponseEntity.ok().body("Friend added!");
     }
 
+    @Transactional
     public ResponseEntity<Object> removeFriend(int friendshipId) {
         friendshipMemberRepository.deleteByFriendshipId(friendshipId);
         friendshipRepository.deleteById(friendshipId);
@@ -56,7 +70,7 @@ public class FriendshipService {
         return ResponseEntity.ok().body("Friend removed!");
     }
 
-    public ResponseEntity<Object> getFriends(int userId) {
+    public List<Friend> getFriends(int userId) {
         List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByUserId(userId);
         List<Integer> friendshipIds = new ArrayList<>();
 
@@ -64,7 +78,7 @@ public class FriendshipService {
             friendshipIds.add(friendshipMember.getFriendshipId());
         }
 
-        List<User> friends = new ArrayList<>();
+        List<Friend> friends = new ArrayList<>();
 
         for (int friendshipId : friendshipIds) {
             List<FriendshipMember> friendshipMembersByFriendshipId = friendshipMemberRepository.findByFriendshipId(friendshipId);
@@ -79,11 +93,30 @@ public class FriendshipService {
                         continue;
                     }
 
-                    friends.add(optionalFriend.get());
+                    User user = optionalFriend.get();
+                    Friend friend = new Friend();
+
+                    Optional<Friendship> optionalFriendship = friendshipRepository.findById(friendshipId);
+
+                    if (optionalFriendship.isEmpty()) {
+                        friendshipMemberRepository.deleteByFriendshipId(friendshipId);
+                        friendshipRepository.deleteById(friendshipId);
+                        continue;
+                    }
+
+                    Friendship friendship = optionalFriendship.get();
+
+                    friend.setId(user.getId());
+                    friend.setUsername(user.getUsername());
+                    friend.setProfilePictureUrl(user.getProfilePictureUrl());
+                    friend.setFriendshipId(friendshipId);
+                    friend.setDate(friendship.getDate());
+
+                    friends.add(friend);
                 }
             }
         }
 
-        return ResponseEntity.ok(friends);
+        return friends;
     }
 }
