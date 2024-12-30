@@ -8,10 +8,5 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "privateChat")
-public class PrivateChat {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
-    @Column(name = "lastUpdated", nullable = false, updatable = true, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime lastUpdated;
+public class PrivateChat extends Chat {
 }

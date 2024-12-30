@@ -12,8 +12,10 @@ public class FriendshipRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
+
     private int senderId;
     private int receiverId;
+
     @Column(name = "date", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime date;
 }

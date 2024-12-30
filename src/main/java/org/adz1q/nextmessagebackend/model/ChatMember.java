@@ -10,6 +10,7 @@ public class ChatMember {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
+
     private int chatId;
     private int userId;
 }

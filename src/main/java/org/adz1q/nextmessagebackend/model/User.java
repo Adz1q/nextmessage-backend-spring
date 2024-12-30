@@ -12,13 +12,17 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
+
     private String username;
     private String email;
     private String password;
+
     @Column(name = "profilePictureUrl", nullable = false, updatable = true, columnDefinition = "VARCHAR(255) DEFAULT 'https://i.imgur.com'")
     private String profilePictureUrl;
+
     @Column(name = "date", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime date;
+
     @Column(name = "allowMessagesFromNonFriends", nullable = false, updatable = true, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean allowMessagesFromNonFriends;
 }
