@@ -21,10 +21,11 @@ public class ChatRestController {
     @GetMapping("/get/{chatId}/messages")
     public List<Message> getMessages(
             @PathVariable int chatId,
+            @RequestParam int userId,
             @RequestParam int offset,
             @RequestParam int limit
     ) {
-        return chatService.getMessages(chatId, offset, limit);
+        return chatService.getMessages(chatId, userId, offset, limit);
     }
 
     @PostMapping("/create/private")

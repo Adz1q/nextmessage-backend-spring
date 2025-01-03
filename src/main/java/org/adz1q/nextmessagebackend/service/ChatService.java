@@ -80,9 +80,20 @@ public class ChatService {
 
     public ChatMessage sendMessage(ChatMessage chatMessage) throws Exception {
         Optional<Chat> optionalChat = chatRepository.findById(chatMessage.getChatId());
+        Optional<User> optionalUser = userRepository.findById(chatMessage.getSenderId());
 
         if (optionalChat.isEmpty()) {
             throw new Exception("Chat not found");
+        }
+
+        if (optionalUser.isEmpty()) {
+            throw new Exception("User not found");
+        }
+
+        Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(chatMessage.getSenderId(), chatMessage.getChatId());
+
+        if (optionalChatMember.isEmpty()) {
+            throw new Exception("User is not a member of this chat");
         }
 
         String encryptedContent = encryptMessage(chatMessage.getContent());
@@ -97,11 +108,32 @@ public class ChatService {
         chat.setLastUpdated(LocalDateTime.now());
         chatRepository.save(chat);
 
+        String decryptedContent = decryptMessage(chatMessage.getContent());
+        chatMessage.setContent(decryptedContent);
+
         return chatMessage;
     }
 
-    public List<Message> getMessages(int chatId, int offset, int limit) {
-        return messageRepository.findByChatId(chatId, offset, limit);
+    public List<Message> getMessages(int chatId, int userId, int offset, int limit) {
+        Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
+
+        if (optionalChatMember.isEmpty()) {
+            throw new Error("User is not a member of this chat");
+        }
+
+        List<Message> messages = messageRepository.findByChatId(chatId, offset, limit);
+
+        for (Message message : messages) {
+            try {
+                String decryptedContent = decryptMessage(message.getContent());
+                message.setContent(decryptedContent);
+            }
+            catch (Exception error) {
+                System.out.println("Error while decrypting message");
+            }
+        }
+
+        return messages;
     }
 
     public ResponseEntity<Object> createPrivateChat(PrivateChatRequestDto privateChatRequestDto) {
