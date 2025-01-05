@@ -46,20 +46,31 @@ public class ChatService {
     }
 
     @Data
+    public static class EncryptedMessage {
+        private String content;
+        private SecretKey secretKey;
+    }
+
+    @Data
     public static class PrivateChatRequestDto {
         private int senderId;
         private int receiverId;
     }
 
-    public String encryptMessage(String content) throws Exception {
+    public EncryptedMessage encryptMessage(String content) throws Exception {
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         byte[] encryptedContent = cipher.doFinal(content.getBytes());
 
-        return Base64.getEncoder().encodeToString(encryptedContent);
+        EncryptedMessage encryptedMessage = new EncryptedMessage();
+
+        encryptedMessage.setContent(Base64.getEncoder().encodeToString(encryptedContent));
+        encryptedMessage.setSecretKey(secretKey);
+
+        return encryptedMessage;
     }
 
-    public String decryptMessage(String encryptedContent) throws Exception {
+    public String decryptMessage(String encryptedContent, SecretKey secretKey) throws Exception {
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
         byte[] decryptedContent = cipher.doFinal(Base64.getDecoder().decode(encryptedContent));
@@ -74,6 +85,7 @@ public class ChatService {
         message.setSenderId(chatMessage.getSenderId());
         message.setContent(chatMessage.getContent());
         message.setDate(chatMessage.getDate());
+        message.setSecretKey(chatMessage.getSecretKey());
 
         messageRepository.save(message);
     }
@@ -96,10 +108,11 @@ public class ChatService {
             throw new Exception("User is not a member of this chat");
         }
 
-        String encryptedContent = encryptMessage(chatMessage.getContent());
+        EncryptedMessage encryptedMessage = encryptMessage(chatMessage.getContent());
 
-        chatMessage.setContent(encryptedContent);
+        chatMessage.setContent(encryptedMessage.getContent());
         chatMessage.setDate(LocalDateTime.now());
+        chatMessage.setSecretKey(encryptedMessage.getSecretKey());
 
         saveMessage(chatMessage);
 
@@ -108,7 +121,7 @@ public class ChatService {
         chat.setLastUpdated(LocalDateTime.now());
         chatRepository.save(chat);
 
-        String decryptedContent = decryptMessage(chatMessage.getContent());
+        String decryptedContent = decryptMessage(chatMessage.getContent(), chatMessage.getSecretKey());
         chatMessage.setContent(decryptedContent);
 
         return chatMessage;
@@ -125,7 +138,7 @@ public class ChatService {
 
         for (Message message : messages) {
             try {
-                String decryptedContent = decryptMessage(message.getContent());
+                String decryptedContent = decryptMessage(message.getContent(), message.getSecretKey());
                 message.setContent(decryptedContent);
             }
             catch (Exception error) {
