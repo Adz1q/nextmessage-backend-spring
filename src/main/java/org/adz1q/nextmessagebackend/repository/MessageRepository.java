@@ -10,4 +10,5 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, Integer> {
     @Query(value = "SELECT * FROM Message WHERE chat_id = :chatId ORDER BY date DESC LIMIT :limit OFFSET :offset", nativeQuery = true)
     List<Message> findByChatId(@Param("chatId") int chatId, @Param("offset") int offset, @Param("limit") int limit);
+    void deleteByChatId(int chatId);
 }

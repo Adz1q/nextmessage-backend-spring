@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface ChatMemberRepository extends JpaRepository<ChatMember, Integer> {
     void deleteByUserId(int userId);
+    void deleteByChatId(int chatId);
     List<ChatMember> findByUserId(int userId);
+    List<ChatMember> findByChatId(int chatId);
     Optional<ChatMember> findByUserIdAndChatId(int userId, int chatId);
 }

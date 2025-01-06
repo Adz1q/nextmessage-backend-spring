@@ -121,7 +121,7 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setProfilePictureUrl("/public/defaultProfilePicture.png");
+        user.setProfilePictureUrl("default_profile_picture_url_user");
         user.setDate(LocalDateTime.now());
         user.setAllowMessagesFromNonFriends(true);
 
@@ -262,7 +262,6 @@ public class UserService {
         if (!passwordEncoder.matches(deleteAccountRequest.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
         }
-
 
         List<Integer> friendshipIds = new ArrayList<>();
         List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByUserId(deleteAccountRequest.getUserId());

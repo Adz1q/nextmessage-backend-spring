@@ -1,12 +1,10 @@
 package org.adz1q.nextmessagebackend.controller;
 
-import org.adz1q.nextmessagebackend.model.Message;
+import org.adz1q.nextmessagebackend.model.Chat;
 import org.adz1q.nextmessagebackend.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/db/chat")
@@ -19,7 +17,7 @@ public class ChatRestController {
     }
 
     @GetMapping("/get/{chatId}/messages")
-    public List<Message> getMessages(
+    public ResponseEntity<Object> getMessages(
             @PathVariable int chatId,
             @RequestParam int userId,
             @RequestParam int offset,
@@ -28,10 +26,85 @@ public class ChatRestController {
         return chatService.getMessages(chatId, userId, offset, limit);
     }
 
+    @GetMapping("/get/{chatId}")
+    public ResponseEntity<Object> getChat(
+            @PathVariable int chatId,
+            @RequestParam int userId
+    ) {
+        return chatService.getChat(chatId, userId);
+    }
+
+    @GetMapping("/get/{chatId}/members")
+    public ResponseEntity<Object> getChatMembers(
+            @PathVariable int chatId,
+            @RequestParam int userId
+    ) {
+        return chatService.getChatMembers(chatId, userId);
+    }
+
+    @GetMapping("/get/{chatId}/otherMember")
+    public ResponseEntity<Object> getOtherPrivateChatMember(
+            @PathVariable int chatId,
+            @RequestParam int userId
+    ) {
+        return chatService.getOtherPrivateChatMember(chatId, userId);
+    }
+
     @PostMapping("/create/private")
     public ResponseEntity<Object> createPrivateChat(
             @RequestBody ChatService.PrivateChatRequestDto privateChatRequestDto
     ) {
         return chatService.createPrivateChat(privateChatRequestDto);
+    }
+
+    @PostMapping("/create/team")
+    public ResponseEntity<Object> createTeamChat(
+            @RequestBody ChatService.TeamChatRequestDto teamChatRequestDto
+    ) {
+        return chatService.createTeamChat(teamChatRequestDto);
+    }
+
+    @PostMapping("/change/name")
+    public ResponseEntity<Object> changeTeamChatName(
+            @RequestBody ChatService.ChangeTeamChatNameRequestDto changeTeamChatNameRequestDto
+    ) {
+        return chatService.changeTeamChatName(changeTeamChatNameRequestDto);
+    }
+
+    //changeTeamChatProfilePicture
+
+    @DeleteMapping("/delete/profilePicture")
+    public ResponseEntity<Object> deleteTeamChatProfilePicture(
+            @RequestBody ChatService.DeleteTeamChatProfilePictureRequestDto deleteTeamChatProfilePictureRequestDto
+    ) {
+        return chatService.deleteTeamChatProfilePicture(deleteTeamChatProfilePictureRequestDto);
+    }
+
+    @PostMapping("/change/admin")
+    public ResponseEntity<Object> changeTeamChatAdmin(
+            @RequestBody ChatService.ChangeTeamChatAdminRequestDto changeTeamChatAdminRequestDto
+    ) {
+        return chatService.changeTeamChatAdmin(changeTeamChatAdminRequestDto);
+    }
+
+    @PostMapping("/add/member")
+    public ResponseEntity<Object> addTeamChatMember(
+            @RequestBody ChatService.AddTeamChatMemberRequestDto addTeamChatMemberRequestDto
+    ) {
+        return chatService.addTeamChatMember(addTeamChatMemberRequestDto);
+    }
+
+    @DeleteMapping("/remove/member")
+    public ResponseEntity<Object> removeTeamChatMember(
+            @RequestBody ChatService.RemoveTeamChatMemberRequestDto removeTeamChatMemberRequestDto
+    ) {
+        return chatService.removeTeamChatMember(removeTeamChatMemberRequestDto);
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<Object> deleteTeamChat(
+            @RequestBody ChatService.DeleteTeamChatRequestDto deleteTeamChatRequestDto
+    ) {
+        return chatService.deleteTeamChat(deleteTeamChatRequestDto);
     }
 }
