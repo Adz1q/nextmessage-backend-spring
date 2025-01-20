@@ -8,6 +8,7 @@ import org.adz1q.nextmessagebackend.repository.FriendshipMemberRepository;
 import org.adz1q.nextmessagebackend.repository.FriendshipRepository;
 import org.adz1q.nextmessagebackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +65,12 @@ public class FriendshipService {
 
     @Transactional
     public ResponseEntity<Object> removeFriend(int friendshipId) {
+        Optional<Friendship> optionalFriendship = friendshipRepository.findById(friendshipId);
+
+        if (optionalFriendship.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Friendship not found");
+        }
+
         friendshipMemberRepository.deleteByFriendshipId(friendshipId);
         friendshipRepository.deleteById(friendshipId);
 
