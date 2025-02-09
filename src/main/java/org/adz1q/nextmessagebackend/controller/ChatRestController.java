@@ -1,6 +1,5 @@
 package org.adz1q.nextmessagebackend.controller;
 
-import org.adz1q.nextmessagebackend.model.Chat;
 import org.adz1q.nextmessagebackend.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
