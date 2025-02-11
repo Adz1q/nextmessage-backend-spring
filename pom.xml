@@ -9,10 +9,10 @@
         <relativePath/>
     </parent>
     <groupId>org.adz1q</groupId>
-    <artifactId>NextMessageBackend</artifactId>
+    <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>NextMessageBackend</name>
-    <description>NextMessageBackend</description>
+    <name>NextMessage</name>
+    <description>NextMessage</description>
     <url/>
     <licenses>
         <license/>
