@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/db/chat")
+@RequestMapping("/api/v1/chat")
 public class ChatRestController {
     private final ChatService chatService;
 

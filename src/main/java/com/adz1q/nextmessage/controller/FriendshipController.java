@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/db/friendship")
+@RequestMapping("/api/v1/friendship")
 public class FriendshipController {
     private final FriendshipService friendshipService;
 

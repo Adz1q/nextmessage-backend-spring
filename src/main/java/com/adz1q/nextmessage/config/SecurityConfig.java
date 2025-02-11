@@ -1,5 +1,6 @@
-package com.adz1q.nextmessage.auth;
+package com.adz1q.nextmessage.config;
 
+import com.adz1q.nextmessage.auth.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
