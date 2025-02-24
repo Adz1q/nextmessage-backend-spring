@@ -1,6 +1,5 @@
 package com.adz1q.nextmessage.controller;
 
-import com.adz1q.nextmessage.model.User;
 import com.adz1q.nextmessage.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +18,12 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody User user) {
-        return userService.register(user);
+    public ResponseEntity<Object> register(@RequestBody UserService.RegisterRequestDto registerRequest) {
+        return userService.register(registerRequest);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody UserService.LoginRequest loginRequest) {
+    public ResponseEntity<Object> login(@RequestBody UserService.LoginRequestDto loginRequest) {
         return userService.login(loginRequest);
     }
 
@@ -34,22 +33,22 @@ public class UserController {
     }
 
     @PostMapping("/change/username")
-    public ResponseEntity<Object> changeUsername(@RequestBody UserService.ChangeUsernameRequest changeUsernameRequest) {
+    public ResponseEntity<Object> changeUsername(@RequestBody UserService.ChangeUsernameRequestDto changeUsernameRequest) {
         return userService.changeUsername(changeUsernameRequest);
     }
 
     @PostMapping("/change/password")
-    public ResponseEntity<Object> changePassword(@RequestBody UserService.ChangePasswordRequest changePasswordRequest) {
+    public ResponseEntity<Object> changePassword(@RequestBody UserService.ChangePasswordRequestDto changePasswordRequest) {
         return userService.changePassword(changePasswordRequest);
     }
 
     @PostMapping("change/messagePreferences")
-    public ResponseEntity<Object> changeAllowMessagesFromNonFriends(@RequestBody UserService.ChangeMessagePreferencesRequest changeMessagePreferencesRequest) {
+    public ResponseEntity<Object> changeAllowMessagesFromNonFriends(@RequestBody UserService.ChangeMessagePreferencesRequestDto changeMessagePreferencesRequest) {
         return userService.changeAllowMessagesFromNonFriends(changeMessagePreferencesRequest);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<Object> deleteAccount(@RequestBody UserService.DeleteAccountRequest deleteAccountRequest) {
+    public ResponseEntity<Object> deleteAccount(@RequestBody UserService.DeleteAccountRequestDto deleteAccountRequest) {
         return userService.deleteAccount(deleteAccountRequest);
     }
 

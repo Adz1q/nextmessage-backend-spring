@@ -57,32 +57,39 @@ public class UserService {
     }
 
     @Data
-    public static class LoginRequest {
+    public static class RegisterRequestDto {
+        private String username;
+        private String email;
+        private String password;
+    }
+
+    @Data
+    public static class LoginRequestDto {
         private String login;
         private String password;
     }
 
     @Data
-    public static class ChangeUsernameRequest {
+    public static class ChangeUsernameRequestDto {
         private int userId;
         private String newUsername;
     }
 
     @Data
-    public static class ChangePasswordRequest {
+    public static class ChangePasswordRequestDto {
         private int userId;
         private String oldPassword;
         private String newPassword;
     }
 
     @Data
-    public static class ChangeMessagePreferencesRequest {
+    public static class ChangeMessagePreferencesRequestDto {
         private int userId;
         private boolean allowMessagesFromNonFriends;
     }
 
     @Data
-    public static class DeleteAccountRequest {
+    public static class DeleteAccountRequestDto {
         private int userId;
         private String password;
     }
@@ -96,9 +103,9 @@ public class UserService {
         private boolean allowMessagesFromNonFriends;
     }
 
-    public ResponseEntity<Object> register(User user) {
-        Optional<User> optionalUsername = userRepository.findByUsername(user.getUsername());
-        Optional<User> optionalEmail = userRepository.findByEmail(user.getEmail());
+    public ResponseEntity<Object> register(RegisterRequestDto registerRequest) {
+        Optional<User> optionalUsername = userRepository.findByUsername(registerRequest.getUsername());
+        Optional<User> optionalEmail = userRepository.findByEmail(registerRequest.getEmail());
 
         if(!optionalUsername.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User with this username already exists");
@@ -108,19 +115,23 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User with this email already exists");
         }
 
-        if(user.getUsername().length() < 4 || user.getUsername().length() > 20) {
+        if(registerRequest.getUsername().length() < 4 || registerRequest.getUsername().length() > 20) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters");
         }
 
-        if(user.getEmail().length() < 4 || user.getEmail().length() > 50) {
+        if(registerRequest.getEmail().length() < 4 || registerRequest.getEmail().length() > 50) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 4 and 50 characters");
         }
 
-        if(user.getPassword().length() < 5 || user.getPassword().length() > 32) {
+        if(registerRequest.getPassword().length() < 5 || registerRequest.getPassword().length() > 32) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User user = new User();
+
+        user.setUsername(registerRequest.getUsername());
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setProfilePictureUrl("default_profile_picture_url_user");
         user.setDate(LocalDateTime.now());
         user.setAllowMessagesFromNonFriends(true);
@@ -129,7 +140,7 @@ public class UserService {
         return ResponseEntity.ok(user);
     }
 
-    public ResponseEntity<Object> login(LoginRequest loginRequest) {
+    public ResponseEntity<Object> login(LoginRequestDto loginRequest) {
         Optional<User> optionalUsername = userRepository.findByUsername(loginRequest.getLogin());
         Optional<User> optionalEmail = userRepository.findByEmail(loginRequest.getLogin());
 
@@ -177,7 +188,7 @@ public class UserService {
         return ResponseEntity.ok(user);
     }
 
-    public ResponseEntity<Object> changeUsername(ChangeUsernameRequest changeUsernameRequest) {
+    public ResponseEntity<Object> changeUsername(ChangeUsernameRequestDto changeUsernameRequest) {
         Optional<User> optionalUser = userRepository.findById(changeUsernameRequest.getUserId());
 
         if (optionalUser.isEmpty()) {
@@ -202,7 +213,7 @@ public class UserService {
         return ResponseEntity.ok(user);
     }
 
-    public ResponseEntity<Object> changePassword(ChangePasswordRequest changePasswordRequest) {
+    public ResponseEntity<Object> changePassword(ChangePasswordRequestDto changePasswordRequest) {
         Optional<User> optionalUser = userRepository.findById(changePasswordRequest.getUserId());
 
         if (optionalUser.isEmpty()) {
@@ -230,7 +241,7 @@ public class UserService {
     // changeProfilePicture()
     // deleteProfilePicture()
 
-    public ResponseEntity<Object> changeAllowMessagesFromNonFriends(ChangeMessagePreferencesRequest changeMessagePreferencesRequest) {
+    public ResponseEntity<Object> changeAllowMessagesFromNonFriends(ChangeMessagePreferencesRequestDto changeMessagePreferencesRequest) {
         Optional<User> optionalUser = userRepository.findById(changeMessagePreferencesRequest.getUserId());
 
         if (optionalUser.isEmpty()) {
@@ -250,7 +261,7 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<Object> deleteAccount(DeleteAccountRequest deleteAccountRequest) {
+    public ResponseEntity<Object> deleteAccount(DeleteAccountRequestDto deleteAccountRequest) {
         Optional<User> optionalUser = userRepository.findById(deleteAccountRequest.getUserId());
 
         if (optionalUser.isEmpty()) {
