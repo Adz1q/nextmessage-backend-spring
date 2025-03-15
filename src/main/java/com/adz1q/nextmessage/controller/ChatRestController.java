@@ -33,6 +33,11 @@ public class ChatRestController {
         return chatService.getChat(chatId, userId);
     }
 
+    @GetMapping("/getAll/{userId}")
+    public ResponseEntity<Object> getChats(@PathVariable int userId) {
+        return chatService.getChats(userId);
+    }
+
     @GetMapping("/get/{chatId}/members")
     public ResponseEntity<Object> getChatMembers(
             @PathVariable int chatId,

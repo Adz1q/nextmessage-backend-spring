@@ -104,84 +104,100 @@ public class UserService {
     }
 
     public ResponseEntity<Object> register(RegisterRequestDto registerRequest) {
-        Optional<User> optionalUsername = userRepository.findByUsername(registerRequest.getUsername());
-        Optional<User> optionalEmail = userRepository.findByEmail(registerRequest.getEmail());
+        String username = registerRequest.getUsername().trim();
+        String email = registerRequest.getEmail().trim();
+        String password = registerRequest.getPassword().trim();
 
-        if(!optionalUsername.isEmpty()) {
+        Optional<User> optionalUsername = userRepository.findByUsername(username);
+        Optional<User> optionalEmail = userRepository.findByEmail(email);
+
+        if (!optionalUsername.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User with this username already exists");
         }
 
-        if(!optionalEmail.isEmpty()) {
+        if (!optionalEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User with this email already exists");
         }
 
-        if(registerRequest.getUsername().length() < 4 || registerRequest.getUsername().length() > 20) {
+        if (username.length() < 4 || username.length() > 20) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters");
         }
 
-        if(registerRequest.getEmail().length() < 4 || registerRequest.getEmail().length() > 50) {
+        if (email.length() < 4 || email.length() > 50) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email must be between 4 and 50 characters");
         }
 
-        if(registerRequest.getPassword().length() < 5 || registerRequest.getPassword().length() > 32) {
+        if (password.length() < 5 || password.length() > 32) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters");
         }
 
         User user = new User();
+        String encodedPassword = passwordEncoder.encode(password);
+        String defaultProfilePictureUrl = "/profile.png";
+        LocalDateTime currentTime = LocalDateTime.now();
+        boolean defaultAllowMessagesFromNonFriends = true;
 
-        user.setUsername(registerRequest.getUsername());
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setProfilePictureUrl("default_profile_picture_url_user");
-        user.setDate(LocalDateTime.now());
-        user.setAllowMessagesFromNonFriends(true);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(encodedPassword);
+        user.setProfilePictureUrl(defaultProfilePictureUrl);
+        user.setDate(currentTime);
+        user.setAllowMessagesFromNonFriends(defaultAllowMessagesFromNonFriends);
 
         userRepository.save(user);
         return ResponseEntity.ok(user);
     }
 
     public ResponseEntity<Object> login(LoginRequestDto loginRequest) {
-        Optional<User> optionalUsername = userRepository.findByUsername(loginRequest.getLogin());
-        Optional<User> optionalEmail = userRepository.findByEmail(loginRequest.getLogin());
+        String login = loginRequest.getLogin().trim();
+        String password = loginRequest.getPassword().trim();
 
-        if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid login or password");
+        if (password.contains(" ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login or password");
+        }
+
+        Optional<User> optionalUsername = userRepository.findByUsername(login);
+        Optional<User> optionalEmail = userRepository.findByEmail(login);
+
+        if (optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login or password");
         }
 
         User user = null;
 
-        if(!optionalUsername.isEmpty()) {
+        if (!optionalUsername.isEmpty()) {
             user = optionalUsername.get();
         }
 
-        if(!optionalEmail.isEmpty()) {
+        if (!optionalEmail.isEmpty()) {
             user = optionalEmail.get();
         }
 
-        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login or password");
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login or password");
         }
 
         String token = jwtService.generateToken(user.getUsername());
+        JwtResponse jwtResponse = new JwtResponse(token);
 
-        return ResponseEntity.ok(new JwtResponse(token));
+        return ResponseEntity.ok(jwtResponse);
     }
 
     public ResponseEntity<Object> getUser(String login) {
         Optional<User> optionalUsername = userRepository.findByUsername(login);
         Optional<User> optionalEmail = userRepository.findByEmail(login);
 
-        if(optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
+        if (optionalUsername.isEmpty() && optionalEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
         User user = null;
 
-        if(!optionalUsername.isEmpty()) {
+        if (!optionalUsername.isEmpty()) {
             user = optionalUsername.get();
         }
 
-        if(!optionalEmail.isEmpty()) {
+        if (!optionalEmail.isEmpty()) {
             user = optionalEmail.get();
         }
 
@@ -277,7 +293,7 @@ public class UserService {
         List<Integer> friendshipIds = new ArrayList<>();
         List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByUserId(deleteAccountRequest.getUserId());
 
-        for (FriendshipMember friendshipMember: friendshipMembers) {
+        for (FriendshipMember friendshipMember : friendshipMembers) {
             friendshipIds.add(friendshipMember.getFriendshipId());
         }
 

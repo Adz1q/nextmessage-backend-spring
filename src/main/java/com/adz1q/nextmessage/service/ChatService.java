@@ -4,6 +4,7 @@ import com.adz1q.nextmessage.model.*;
 import com.adz1q.nextmessage.repository.*;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,7 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ChatService {
@@ -56,6 +54,15 @@ public class ChatService {
     public static class EncryptedMessage {
         private String content;
         private SecretKey secretKey;
+    }
+
+    @Data
+    public static class ChatCard {
+        private int id;
+        private String name;
+        private LocalDateTime lastUpdated;
+        private String profilePictureUrl;
+        private String type;
     }
 
     @Data
@@ -237,6 +244,78 @@ public class ChatService {
         return ResponseEntity.ok(chat);
     }
 
+    public ResponseEntity<Object> getChats(int userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The user does not exist");
+        }
+
+        List<ChatMember> chatMembers = chatMemberRepository.findByUserId(userId);
+        List<ChatCard> chats = new ArrayList<>();
+
+        for (ChatMember chatMember : chatMembers) {
+            Optional<Chat> optionalChat = chatRepository.findById(chatMember.getChatId());
+
+            if (optionalChat.isEmpty()) {
+                continue;
+            }
+
+            Chat chat = optionalChat.get();
+            ChatCard chatCard = new ChatCard();
+            int id = chat.getId();
+            String name = "";
+            LocalDateTime lastUpdated = chat.getLastUpdated();
+            String profilePictureUrl = "";
+            String type = "";
+
+            Optional<PrivateChat> optionalPrivateChat = privateChatRepository.findById(chat.getId());
+            Optional<TeamChat> optionalTeamChat = teamChatRepository.findById(chat.getId());
+
+            if (!optionalPrivateChat.isEmpty()) {
+                List<ChatMember> privateChatMembers = chatMemberRepository.findByChatId(id);
+                User otherUser = null;
+
+                for (ChatMember privateChatMember : privateChatMembers) {
+                    if (privateChatMember.getUserId() != userId) {
+                        Optional<User> optionalOtherUser = userRepository.findById(privateChatMember.getUserId());
+
+                        if (optionalOtherUser.isEmpty()) {
+                            otherUser.setUsername("Deleted user");
+                            otherUser.setProfilePictureUrl("/profile.png");
+                        }
+
+                        otherUser = optionalOtherUser.get();
+                        break;
+                    }
+                }
+
+                profilePictureUrl = otherUser.getProfilePictureUrl();
+                name = otherUser.getUsername();
+                type = "private";
+            }
+
+            if (!optionalTeamChat.isEmpty()) {
+                TeamChat teamChat = optionalTeamChat.get();
+
+                profilePictureUrl = teamChat.getProfilePictureUrl();
+                name = teamChat.getName();
+                lastUpdated = teamChat.getLastUpdated();
+                type = "team";
+            }
+
+            chatCard.setId(id);
+            chatCard.setName(name);
+            chatCard.setLastUpdated(lastUpdated);
+            chatCard.setProfilePictureUrl(profilePictureUrl);
+            chatCard.setType(type);
+
+            chats.add(chatCard);
+        }
+
+        return ResponseEntity.ok(chats);
+    }
+
     public ResponseEntity<Object> getChatMembers(int chatId, int userId) {
         Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
 
@@ -361,31 +440,39 @@ public class ChatService {
     }
 
     public ResponseEntity<Object> createTeamChat(TeamChatRequestDto teamChatRequestDto) {
-        Optional<User> optionalUser = userRepository.findById(teamChatRequestDto.getAdminId());
+        String name = teamChatRequestDto.getName().trim();
+        String profilePictureUrl = teamChatRequestDto.getProfilePictureUrl().trim();
+        int adminId = teamChatRequestDto.getAdminId();
+        List<Integer> memberIds = teamChatRequestDto.getMemberIds();
+        LocalDateTime lastUpdated = LocalDateTime.now();
+
+        Optional<User> optionalUser = userRepository.findById(adminId);
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
-        if (teamChatRequestDto.getName().isEmpty() || teamChatRequestDto.getName().length() > 20) {
+        if (name.isEmpty() || name.length() > 20) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 20 characters");
         }
 
         TeamChat teamChat = new TeamChat();
-        teamChat.setName(teamChatRequestDto.getName());
-        teamChat.setProfilePictureUrl("default_profile_picture_url_chat");
-        teamChat.setAdminId(teamChatRequestDto.getAdminId());
-        teamChat.setLastUpdated(LocalDateTime.now());
+
+        teamChat.setName(name);
+        teamChat.setProfilePictureUrl(profilePictureUrl);
+        teamChat.setAdminId(adminId);
+        teamChat.setLastUpdated(lastUpdated);
 
         chatRepository.save(teamChat);
 
         ChatMember chatMember = new ChatMember();
+
         chatMember.setChatId(teamChat.getId());
-        chatMember.setUserId(teamChatRequestDto.getAdminId());
+        chatMember.setUserId(adminId);
 
         chatMemberRepository.save(chatMember);
 
-        for (int memberId : teamChatRequestDto.getMemberIds()) {
+        for (int memberId : memberIds) {
             Optional<User> optionalMember = userRepository.findById(memberId);
 
             if (optionalMember.isEmpty()) {
@@ -454,7 +541,7 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not the admin of this chat");
         }
 
-        teamChat.setProfilePictureUrl("default_profile_picture_url_chat");
+        teamChat.setProfilePictureUrl("/profile.png");
         teamChat.setLastUpdated(LocalDateTime.now());
 
         teamChatRepository.save(teamChat);
