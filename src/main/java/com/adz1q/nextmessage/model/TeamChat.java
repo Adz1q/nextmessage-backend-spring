@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "teamChat")
+@Table(name = "team_chat")
 public class TeamChat extends Chat {
     private String name;
     private String profilePictureUrl;

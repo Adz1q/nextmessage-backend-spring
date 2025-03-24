@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "friendshipRequest")
+@Table(name = "friendship_request")
 public class FriendshipRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

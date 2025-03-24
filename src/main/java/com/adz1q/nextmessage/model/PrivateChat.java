@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "privateChat")
+@Table(name = "private_chat")
 public class PrivateChat extends Chat {
 }
