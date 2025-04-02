@@ -131,16 +131,52 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters");
         }
 
+        if (!username.startsWith("[a-zA-Z]")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must start with a letter");
+        }
+
         User user = new User();
         String encodedPassword = passwordEncoder.encode(password);
-        String defaultProfilePictureUrl = "/profile.png";
+        String profilePictureUrl;
         LocalDateTime currentTime = LocalDateTime.now();
         boolean defaultAllowMessagesFromNonFriends = true;
+
+        String firstLetter = username.substring(0, 1).toUpperCase();
+
+        profilePictureUrl = switch (firstLetter) {
+            case "A" -> "/profile-pictures/profile_picture_a.png";
+            case "B" -> "/profile-pictures/profile_picture_b.png";
+            case "C" -> "/profile-pictures/profile_picture_c.png";
+            case "D" -> "/profile-pictures/profile_picture_d.png";
+            case "E" -> "/profile-pictures/profile_picture_e.png";
+            case "F" -> "/profile-pictures/profile_picture_f.png";
+            case "G" -> "/profile-pictures/profile_picture_g.png";
+            case "H" -> "/profile-pictures/profile_picture_h.png";
+            case "I" -> "/profile-pictures/profile_picture_i.png";
+            case "J" -> "/profile-pictures/profile_picture_j.png";
+            case "K" -> "/profile-pictures/profile_picture_k.png";
+            case "L" -> "/profile-pictures/profile_picture_l.png";
+            case "M" -> "/profile-pictures/profile_picture_m.png";
+            case "N" -> "/profile-pictures/profile_picture_n.png";
+            case "O" -> "/profile-pictures/profile_picture_o.png";
+            case "P" -> "/profile-pictures/profile_picture_p.png";
+            case "Q" -> "/profile-pictures/profile_picture_q.png";
+            case "R" -> "/profile-pictures/profile_picture_r.png";
+            case "S" -> "/profile-pictures/profile_picture_s.png";
+            case "T" -> "/profile-pictures/profile_picture_t.png";
+            case "U" -> "/profile-pictures/profile_picture_u.png";
+            case "V" -> "/profile-pictures/profile_picture_v.png";
+            case "W" -> "/profile-pictures/profile_picture_w.png";
+            case "X" -> "/profile-pictures/profile_picture_x.png";
+            case "Y" -> "/profile-pictures/profile_picture_y.png";
+            case "Z" -> "/profile-pictures/profile_picture_z.png";
+            default -> "/profile-pictures/profile_picture_default.png";
+        };
 
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(encodedPassword);
-        user.setProfilePictureUrl(defaultProfilePictureUrl);
+        user.setProfilePictureUrl(profilePictureUrl);
         user.setDate(currentTime);
         user.setAllowMessagesFromNonFriends(defaultAllowMessagesFromNonFriends);
 

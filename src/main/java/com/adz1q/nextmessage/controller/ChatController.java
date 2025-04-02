@@ -16,9 +16,13 @@ public class ChatController {
         this.chatService = chatService;
     }
 
-    @MessageMapping("/chat.sendMessage")
-    @SendTo("/topic/public")
+    @MessageMapping("/chat.sendMessage") // This is the endpoint that the frontend will send messages to
+    @SendTo("/topic/chat/{chatId}") // This is the topic that the frontend will subscribe to and there will be sent responses
     public ChatMessage sendMessage(ChatMessage chatMessage) throws Exception {
         return chatService.sendMessage(chatMessage);
     }
+
+//    @MessageMapping("/chat.markAsRead")
+//    @SendTo("/topic/chat/{chatId}")
+    
 }
