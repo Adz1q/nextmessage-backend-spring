@@ -53,3 +53,6 @@ Thumbs.db
 # Generated metadata
 /target/
 /build/
+
+.properties
+application.properties
