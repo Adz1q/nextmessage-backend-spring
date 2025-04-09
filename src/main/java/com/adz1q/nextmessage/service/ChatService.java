@@ -4,7 +4,6 @@ import com.adz1q.nextmessage.model.*;
 import com.adz1q.nextmessage.repository.*;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -63,6 +62,15 @@ public class ChatService {
         private LocalDateTime lastUpdated;
         private String profilePictureUrl;
         private String type;
+    }
+
+    @Data
+    public static class MessageDto {
+        private int id;
+        private int chatId;
+        private int senderId;
+        private String content;
+        private LocalDateTime date;
     }
 
     @Data
@@ -156,7 +164,7 @@ public class ChatService {
         return new String(decryptedContent);
     }
 
-    public void saveMessage(ChatMessage chatMessage) {
+    public int saveMessageAndReturnId(ChatMessage chatMessage) {
         Message message = new Message();
 
         message.setChatId(chatMessage.getChatId());
@@ -166,9 +174,11 @@ public class ChatService {
         message.setSecretKey(chatMessage.getSecretKey());
 
         messageRepository.save(message);
+
+        return message.getId();
     }
 
-    public ChatMessage sendMessage(ChatMessage chatMessage) throws Exception {
+    public MessageDto sendMessage(ChatMessage chatMessage) throws Exception {
         Optional<Chat> optionalChat = chatRepository.findById(chatMessage.getChatId());
         Optional<User> optionalUser = userRepository.findById(chatMessage.getSenderId());
 
@@ -192,7 +202,7 @@ public class ChatService {
         chatMessage.setDate(LocalDateTime.now());
         chatMessage.setSecretKey(encryptedMessage.getSecretKey());
 
-        saveMessage(chatMessage);
+        int id = saveMessageAndReturnId(chatMessage);
 
         Chat chat = optionalChat.get();
 
@@ -200,9 +210,17 @@ public class ChatService {
         chatRepository.save(chat);
 
         String decryptedContent = decryptMessage(chatMessage.getContent(), chatMessage.getSecretKey());
-        chatMessage.setContent(decryptedContent);
 
-        return chatMessage;
+        MessageDto messageDto = new MessageDto();
+
+        messageDto.setId(id);
+        messageDto.setChatId(chatMessage.getChatId());
+        messageDto.setSenderId(chatMessage.getSenderId());
+        messageDto.setContent(decryptedContent);
+        messageDto.setDate(chatMessage.getDate());
+
+
+        return messageDto;
     }
 
     public ResponseEntity<Object> getMessages(int chatId, int userId, int offset, int limit) {
@@ -213,17 +231,28 @@ public class ChatService {
         }
 
         List<Message> messages = messageRepository.findByChatId(chatId, offset, limit);
+        List<MessageDto> messageDtos = new ArrayList<>();
 
         for (Message message : messages) {
             try {
                 String decryptedContent = decryptMessage(message.getContent(), message.getSecretKey());
                 message.setContent(decryptedContent);
-            } catch (Exception error) {
+
+                MessageDto messageDto = new MessageDto();
+                messageDto.setId(message.getId());
+                messageDto.setChatId(message.getChatId());
+                messageDto.setSenderId(message.getSenderId());
+                messageDto.setContent(message.getContent());
+                messageDto.setDate(message.getDate());
+
+                messageDtos.add(messageDto);
+            }
+            catch (Exception error) {
                 System.out.println("Error while decrypting message");
             }
         }
 
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(messageDtos);
     }
 
     public ResponseEntity<Object> getChat(int chatId, int userId) {
@@ -233,15 +262,18 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not a member of this chat");
         }
 
-        Optional<Chat> optionalChat = chatRepository.findById(chatId);
+        Optional<PrivateChat> optionalPrivateChat = privateChatRepository.findById(chatId);
+        Optional<TeamChat> optionalTeamChat = teamChatRepository.findById(chatId);
 
-        if (optionalChat.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
+        if (!optionalPrivateChat.isEmpty()) {
+            return ResponseEntity.ok(optionalPrivateChat.get());
         }
 
-        Chat chat = optionalChat.get();
+        if (!optionalTeamChat.isEmpty()) {
+            return ResponseEntity.ok(optionalPrivateChat.get());
+        }
 
-        return ResponseEntity.ok(chat);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
     }
 
     public ResponseEntity<Object> getChats(int userId) {
@@ -282,7 +314,8 @@ public class ChatService {
 
                         if (optionalOtherUser.isEmpty()) {
                             otherUser.setUsername("Deleted user");
-                            otherUser.setProfilePictureUrl("/profile.png");
+                            otherUser.setProfilePictureUrl("/profile-pictures/profile_picture_default.png");
+                            break;
                         }
 
                         otherUser = optionalOtherUser.get();
