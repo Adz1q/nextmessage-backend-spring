@@ -131,7 +131,7 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password must be between 5 and 32 characters");
         }
 
-        if (!username.startsWith("[a-zA-Z]")) {
+        if (!username.matches("^[a-zA-Z].*")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must start with a letter");
         }
 

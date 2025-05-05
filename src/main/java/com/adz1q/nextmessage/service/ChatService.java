@@ -6,6 +6,7 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final FriendshipMemberRepository friendshipMemberRepository;
     private final TeamChatRepository teamChatRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
     public ChatService(
@@ -34,7 +36,8 @@ public class ChatService {
             UserRepository userRepository,
             ChatRepository chatRepository,
             FriendshipMemberRepository friendshipMemberRepository,
-            TeamChatRepository teamChatRepository
+            TeamChatRepository teamChatRepository,
+            SimpMessagingTemplate simpMessagingTemplate
     ) throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(128);
@@ -47,6 +50,7 @@ public class ChatService {
         this.chatRepository = chatRepository;
         this.friendshipMemberRepository = friendshipMemberRepository;
         this.teamChatRepository = teamChatRepository;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @Data
@@ -101,13 +105,6 @@ public class ChatService {
         private int chatId;
         private int userId;
         private String name;
-    }
-
-    @Data
-    public static class ChangeTeamChatProfilePictureRequestDto {
-        private int chatId;
-        private int userId;
-        private String profilePictureUrl;
     }
 
     @Data
@@ -219,8 +216,18 @@ public class ChatService {
         messageDto.setContent(decryptedContent);
         messageDto.setDate(chatMessage.getDate());
 
+        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(chat.getId());
+
+        for (ChatMember chatMember : chatMembers) {
+            refreshUserChatList(chatMember.getUserId());
+        }
 
         return messageDto;
+    }
+
+    public void refreshUserChatList(int userId) {
+        List<ChatCard> chatCards = getChatsByUserId(userId);
+        simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/chats", chatCards);
     }
 
     public ResponseEntity<Object> getMessages(int chatId, int userId, int offset, int limit) {
@@ -276,12 +283,12 @@ public class ChatService {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
     }
 
-    public ResponseEntity<Object> getChats(int userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The user does not exist");
-        }
+    public List<ChatCard> getChatsByUserId(int userId) {
+//        Optional<User> optionalUser = userRepository.findById(userId);
+//
+////        if (optionalUser.isEmpty()) {
+////            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The user does not exist");
+////        }
 
         List<ChatMember> chatMembers = chatMemberRepository.findByUserId(userId);
         List<ChatCard> chats = new ArrayList<>();
@@ -346,7 +353,8 @@ public class ChatService {
             chats.add(chatCard);
         }
 
-        return ResponseEntity.ok(chats);
+//        return ResponseEntity.ok(chats);
+        return chats;
     }
 
     public ResponseEntity<Object> getChatMembers(int chatId, int userId) {

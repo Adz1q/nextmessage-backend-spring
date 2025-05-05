@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/chat")
 public class ChatRestController {
@@ -34,8 +36,8 @@ public class ChatRestController {
     }
 
     @GetMapping("/getAll/{userId}")
-    public ResponseEntity<Object> getChats(@PathVariable int userId) {
-        return chatService.getChats(userId);
+    public List<ChatService.ChatCard> getChats(@PathVariable int userId) {
+        return chatService.getChatsByUserId(userId);
     }
 
     @GetMapping("/get/{chatId}/members")
