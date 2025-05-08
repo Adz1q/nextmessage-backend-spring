@@ -25,17 +25,21 @@ public class FriendshipService {
     private final FriendshipRepository friendshipRepository;
     private final FriendshipMemberRepository friendshipMemberRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final ChatService chatService;
 
     @Autowired
     public FriendshipService(
             UserRepository userRepository,
             FriendshipRepository friendshipRepository,
             FriendshipMemberRepository friendshipMemberRepository,
-            SimpMessagingTemplate simpMessagingTemplate) {
+            SimpMessagingTemplate simpMessagingTemplate,
+            ChatService chatService
+    ) {
         this.userRepository = userRepository;
         this.friendshipRepository = friendshipRepository;
         this.friendshipMemberRepository = friendshipMemberRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.chatService = chatService;
     }
 
     @Data
@@ -66,6 +70,9 @@ public class FriendshipService {
         refreshUserFriendList(receiverId);
         refreshUserFriendList(senderId);
 
+        chatService.refreshUserChatList(receiverId);
+        chatService.refreshUserChatList(senderId);
+
         return ResponseEntity.ok().body("Friend added!");
     }
 
@@ -84,6 +91,7 @@ public class FriendshipService {
 
         for (FriendshipMember friendshipMember : friendshipMembers) {
             refreshUserFriendList(friendshipMember.getUserId());
+            chatService.refreshUserChatList(friendshipMember.getUserId());
         }
 
         return ResponseEntity.ok().body("Friend removed!");

@@ -21,17 +21,19 @@ public class FriendshipRequestService {
     private final UserRepository userRepository;
     private final FriendshipRequestRepository friendshipRequestRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final ChatService chatService;
 
     @Autowired
     public FriendshipRequestService(
             FriendshipService friendshipService,
             UserRepository userRepository,
             FriendshipRequestRepository friendshipRequestRepository,
-            SimpMessagingTemplate simpMessagingTemplate) {
+            SimpMessagingTemplate simpMessagingTemplate, ChatService chatService) {
         this.friendshipService = friendshipService;
         this.userRepository = userRepository;
         this.friendshipRequestRepository = friendshipRequestRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.chatService = chatService;
     }
 
     @Data
@@ -89,6 +91,8 @@ public class FriendshipRequestService {
 
         refreshUserFriendshipRequestsList(sendFriendshipRequestDto.getReceiverId());
 //        refreshUserFriendshipRequestsList(sendFriendshipRequestDto.getSenderId()); //sending doesn't change the sender friendship requests list
+        chatService.refreshUserChatList(sendFriendshipRequestDto.getReceiverId());
+        chatService.refreshUserChatList(sendFriendshipRequestDto.getSenderId());
 
         return ResponseEntity.ok().body("Friendship request sent!");
     }
@@ -108,6 +112,8 @@ public class FriendshipRequestService {
 
         refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getReceiverId());
 //        refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getSenderId()); //rejecting doesn't change the sender friendship requests list
+        chatService.refreshUserChatList(rejectFriendshipRequestDto.getReceiverId());
+        chatService.refreshUserChatList(rejectFriendshipRequestDto.getSenderId());
 
         return ResponseEntity.ok().body("Friendship request rejected!");
     }

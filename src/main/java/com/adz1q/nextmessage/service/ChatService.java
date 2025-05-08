@@ -28,6 +28,7 @@ public class ChatService {
     private final TeamChatRepository teamChatRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final UserService userService;
+    private final FriendshipRepository friendshipRepository;
 
     @Autowired
     public ChatService(
@@ -39,7 +40,7 @@ public class ChatService {
             FriendshipMemberRepository friendshipMemberRepository,
             TeamChatRepository teamChatRepository,
             SimpMessagingTemplate simpMessagingTemplate,
-            UserService userService) throws Exception {
+            UserService userService, FriendshipRepository friendshipRepository) throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(128);
 
@@ -53,6 +54,7 @@ public class ChatService {
         this.teamChatRepository = teamChatRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.userService = userService;
+        this.friendshipRepository = friendshipRepository;
     }
 
     @Data
@@ -387,6 +389,57 @@ public class ChatService {
         return ResponseEntity.ok(chatMembers);
     }
 
+//    public ResponseEntity<Object> getOtherPrivateChatMember(int chatId, int userId) {
+//        Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
+//
+//        if (optionalChatMember.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not a member of this chat");
+//        }
+//
+//        Optional<Chat> optionalChat = chatRepository.findById(chatId);
+//
+//        if (optionalChat.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
+//        }
+//
+//        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(chatId);
+//        OtherChatMemberDto otherChatMemberDto = new OtherChatMemberDto();
+//
+//        for (ChatMember chatMember : chatMembers) {
+//            if (chatMember.getUserId() != userId) {
+//                Optional<User> optionalUser = userRepository.findById(chatMember.getUserId());
+//
+//                if (optionalUser.isEmpty()) {
+//                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
+//                }
+//
+//                User user = optionalUser.get();
+//
+//                otherChatMemberDto.setId(user.getId());
+//                otherChatMemberDto.setUsername(user.getUsername());
+//                otherChatMemberDto.setProfilePictureUrl(user.getProfilePictureUrl());
+//                otherChatMemberDto.setDate(user.getDate());
+//                otherChatMemberDto.setFriend(false);
+//
+//                List<FriendshipMember> friendshipMembersUser = friendshipMemberRepository.findByUserId(userId);
+//                List<FriendshipMember> friendshipMembersOtherUser = friendshipMemberRepository.findByUserId(user.getId());
+//
+//                for (FriendshipMember friendshipMemberUser : friendshipMembersUser) {
+//                    for (FriendshipMember friendshipMemberOtherUser : friendshipMembersOtherUser) {
+//                        if (friendshipMemberUser.getFriendshipId() == friendshipMemberOtherUser.getFriendshipId()) {
+//                            otherChatMemberDto.setFriend(true);
+//                            break;
+//                        }
+//                    }
+//                }
+//
+//                break;
+//            }
+//        }
+//
+//        return ResponseEntity.ok(otherChatMemberDto);
+//    }
+
     public ResponseEntity<Object> getOtherPrivateChatMember(int chatId, int userId) {
         Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
 
@@ -400,39 +453,25 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
         }
 
-        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(chatId);
+        Optional<User> optionalOtherUser = chatRepository.findByPrivateChatIdAndOtherUserId(chatId, userId);
+
+        if (optionalOtherUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
+        }
+
+        User otherUser = optionalOtherUser.get();
         OtherChatMemberDto otherChatMemberDto = new OtherChatMemberDto();
 
-        for (ChatMember chatMember : chatMembers) {
-            if (chatMember.getUserId() != userId) {
-                Optional<User> optionalUser = userRepository.findById(chatMember.getUserId());
+        otherChatMemberDto.setId(otherUser.getId());
+        otherChatMemberDto.setUsername(otherUser.getUsername());
+        otherChatMemberDto.setProfilePictureUrl(otherUser.getProfilePictureUrl());
+        otherChatMemberDto.setDate(otherUser.getDate());
+        otherChatMemberDto.setFriend(false);
 
-                if (optionalUser.isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
-                }
+        Optional<Integer> friendshipId = friendshipRepository.findFriendshipByUsers(userId, otherUser.getId());
 
-                User user = optionalUser.get();
-
-                otherChatMemberDto.setId(user.getId());
-                otherChatMemberDto.setUsername(user.getUsername());
-                otherChatMemberDto.setProfilePictureUrl(user.getProfilePictureUrl());
-                otherChatMemberDto.setDate(user.getDate());
-                otherChatMemberDto.setFriend(false);
-
-                List<FriendshipMember> friendshipMembersUser = friendshipMemberRepository.findByUserId(userId);
-                List<FriendshipMember> friendshipMembersOtherUser = friendshipMemberRepository.findByUserId(user.getId());
-
-                for (FriendshipMember friendshipMemberUser : friendshipMembersUser) {
-                    for (FriendshipMember friendshipMemberOtherUser : friendshipMembersOtherUser) {
-                        if (friendshipMemberUser.getFriendshipId() == friendshipMemberOtherUser.getFriendshipId()) {
-                            otherChatMemberDto.setFriend(true);
-                            break;
-                        }
-                    }
-                }
-
-                break;
-            }
+        if (!friendshipId.isEmpty()) {
+            otherChatMemberDto.setFriend(true);
         }
 
         return ResponseEntity.ok(otherChatMemberDto);
@@ -507,8 +546,8 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
-        if (name.isEmpty() || name.length() > 20) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 20 characters");
+        if (name.isEmpty() || name.length() > 12) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 12 characters");
         }
 
         TeamChat teamChat = new TeamChat();
@@ -563,8 +602,8 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not the admin of this chat");
         }
 
-        if (changeTeamChatRequestDto.getName().isEmpty() || changeTeamChatRequestDto.getName().length() > 20) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 20 characters");
+        if (changeTeamChatRequestDto.getName().isEmpty() || changeTeamChatRequestDto.getName().length() > 12) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 12 characters");
         }
 
         teamChat.setName(changeTeamChatRequestDto.getName());

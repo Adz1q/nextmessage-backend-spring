@@ -155,8 +155,8 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User with this email already exists");
         }
 
-        if (username.length() < 4 || username.length() > 20) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 20 characters");
+        if (username.length() < 4 || username.length() > 12) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username must be between 4 and 12 characters");
         }
 
         if (email.length() < 4 || email.length() > 50) {
@@ -257,8 +257,8 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username is already taken");
         }
 
-        if (changeUsernameRequest.getNewUsername().length() < 4 || changeUsernameRequest.getNewUsername().length() > 20) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New username must be between 4 and 20 characters");
+        if (changeUsernameRequest.getNewUsername().length() < 4 || changeUsernameRequest.getNewUsername().length() > 12) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New username must be between 4 and 12 characters");
         }
 
         User user = optionalUser.get();
