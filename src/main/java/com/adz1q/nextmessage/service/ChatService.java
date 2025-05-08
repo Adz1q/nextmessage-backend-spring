@@ -27,6 +27,7 @@ public class ChatService {
     private final FriendshipMemberRepository friendshipMemberRepository;
     private final TeamChatRepository teamChatRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final UserService userService;
 
     @Autowired
     public ChatService(
@@ -37,8 +38,8 @@ public class ChatService {
             ChatRepository chatRepository,
             FriendshipMemberRepository friendshipMemberRepository,
             TeamChatRepository teamChatRepository,
-            SimpMessagingTemplate simpMessagingTemplate
-    ) throws Exception {
+            SimpMessagingTemplate simpMessagingTemplate,
+            UserService userService) throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(128);
 
@@ -51,6 +52,7 @@ public class ChatService {
         this.friendshipMemberRepository = friendshipMemberRepository;
         this.teamChatRepository = teamChatRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.userService = userService;
     }
 
     @Data
@@ -95,7 +97,6 @@ public class ChatService {
     @Data
     public static class TeamChatRequestDto {
         private String name;
-        private String profilePictureUrl;
         private int adminId;
         List<Integer> memberIds;
     }
@@ -496,7 +497,6 @@ public class ChatService {
 
     public ResponseEntity<Object> createTeamChat(TeamChatRequestDto teamChatRequestDto) {
         String name = teamChatRequestDto.getName().trim();
-        String profilePictureUrl = teamChatRequestDto.getProfilePictureUrl().trim();
         int adminId = teamChatRequestDto.getAdminId();
         List<Integer> memberIds = teamChatRequestDto.getMemberIds();
         LocalDateTime lastUpdated = LocalDateTime.now();
@@ -514,7 +514,7 @@ public class ChatService {
         TeamChat teamChat = new TeamChat();
 
         teamChat.setName(name);
-        teamChat.setProfilePictureUrl(profilePictureUrl);
+        teamChat.setProfilePictureUrl(userService.generateProfilePictureUrl(name));
         teamChat.setAdminId(adminId);
         teamChat.setLastUpdated(lastUpdated);
 
@@ -568,6 +568,7 @@ public class ChatService {
         }
 
         teamChat.setName(changeTeamChatRequestDto.getName());
+        teamChat.setProfilePictureUrl(userService.generateProfilePictureUrl(changeTeamChatRequestDto.getName()));
         teamChat.setLastUpdated(LocalDateTime.now());
 
         teamChatRepository.save(teamChat);
@@ -594,7 +595,7 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not the admin of this chat");
         }
 
-        teamChat.setProfilePictureUrl("/profile.png");
+        teamChat.setProfilePictureUrl("/profile-pictures/profile_picture_default.png");
         teamChat.setLastUpdated(LocalDateTime.now());
 
         teamChatRepository.save(teamChat);

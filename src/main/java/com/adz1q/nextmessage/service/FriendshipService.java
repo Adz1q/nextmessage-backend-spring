@@ -10,6 +10,7 @@ import com.adz1q.nextmessage.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,16 +24,18 @@ public class FriendshipService {
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
     private final FriendshipMemberRepository friendshipMemberRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
     public FriendshipService(
             UserRepository userRepository,
             FriendshipRepository friendshipRepository,
-            FriendshipMemberRepository friendshipMemberRepository
-    ) {
+            FriendshipMemberRepository friendshipMemberRepository,
+            SimpMessagingTemplate simpMessagingTemplate) {
         this.userRepository = userRepository;
         this.friendshipRepository = friendshipRepository;
         this.friendshipMemberRepository = friendshipMemberRepository;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @Data
@@ -60,6 +63,9 @@ public class FriendshipService {
         friendshipMemberTwo.setUserId(receiverId);
         friendshipMemberRepository.save(friendshipMemberTwo);
 
+        refreshUserFriendList(receiverId);
+        refreshUserFriendList(senderId);
+
         return ResponseEntity.ok().body("Friend added!");
     }
 
@@ -71,8 +77,14 @@ public class FriendshipService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Friendship not found");
         }
 
+        List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByFriendshipId(friendshipId);
+
         friendshipMemberRepository.deleteByFriendshipId(friendshipId);
         friendshipRepository.deleteById(friendshipId);
+
+        for (FriendshipMember friendshipMember : friendshipMembers) {
+            refreshUserFriendList(friendshipMember.getUserId());
+        }
 
         return ResponseEntity.ok().body("Friend removed!");
     }
@@ -125,5 +137,10 @@ public class FriendshipService {
         }
 
         return friends;
+    }
+
+    public void refreshUserFriendList(int userId) {
+        List<Friend> friends = getFriends(userId);
+        simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/friends", friends);
     }
 }

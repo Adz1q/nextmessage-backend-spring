@@ -8,6 +8,7 @@ import com.adz1q.nextmessage.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,16 +20,18 @@ public class FriendshipRequestService {
     private final FriendshipService friendshipService;
     private final UserRepository userRepository;
     private final FriendshipRequestRepository friendshipRequestRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
     public FriendshipRequestService(
             FriendshipService friendshipService,
             UserRepository userRepository,
-            FriendshipRequestRepository friendshipRequestRepository
-    ) {
+            FriendshipRequestRepository friendshipRequestRepository,
+            SimpMessagingTemplate simpMessagingTemplate) {
         this.friendshipService = friendshipService;
         this.userRepository = userRepository;
         this.friendshipRequestRepository = friendshipRequestRepository;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @Data
@@ -50,10 +53,10 @@ public class FriendshipRequestService {
     }
 
     public ResponseEntity<Object> sendFriendshipRequest(SendFriendshipRequestDto sendFriendshipRequestDto) {
-        Optional<User> sender = userRepository.findById(sendFriendshipRequestDto.getSenderId());
-        Optional<User> receiver = userRepository.findById(sendFriendshipRequestDto.getReceiverId());
+        Optional<User> optionalSender = userRepository.findById(sendFriendshipRequestDto.getSenderId());
+        Optional<User> optionalReceiver = userRepository.findById(sendFriendshipRequestDto.getReceiverId());
 
-        if (sender.isEmpty() || receiver.isEmpty()) {
+        if (optionalSender.isEmpty() || optionalReceiver.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Receiver or sender not found!");
         }
 
@@ -84,6 +87,9 @@ public class FriendshipRequestService {
         friendshipRequest.setDate(LocalDateTime.now());
         friendshipRequestRepository.save(friendshipRequest);
 
+        refreshUserFriendshipRequestsList(sendFriendshipRequestDto.getReceiverId());
+//        refreshUserFriendshipRequestsList(sendFriendshipRequestDto.getSenderId()); //sending doesn't change the sender friendship requests list
+
         return ResponseEntity.ok().body("Friendship request sent!");
     }
 
@@ -99,6 +105,9 @@ public class FriendshipRequestService {
 
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
         friendshipRequestRepository.deleteById(friendshipRequest.getId());
+
+        refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getReceiverId());
+//        refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getSenderId()); //rejecting doesn't change the sender friendship requests list
 
         return ResponseEntity.ok().body("Friendship request rejected!");
     }
@@ -116,17 +125,25 @@ public class FriendshipRequestService {
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
         friendshipRequestRepository.deleteById(friendshipRequest.getId());
 
+        refreshUserFriendshipRequestsList(acceptFriendshipRequestDto.getReceiverId());
+//        refreshUserFriendshipRequestsList(acceptFriendshipRequestDto.getSenderId()); //accepting doesn't change the sender friendship requests list
+
         return friendshipService.addFriend(
                 acceptFriendshipRequestDto.getSenderId(),
                 acceptFriendshipRequestDto.getReceiverId()
         );
     }
 
-    public List<FriendshipRequest> getFriendshipRequests(int receiverId) {
+    public List<FriendshipRequest> getFriendshipRequestsByReceiverId(int receiverId) {
         return friendshipRequestRepository.findByReceiverId(receiverId);
     }
 
     public List<FriendshipRequest> getFriendshipRequestsBySenderId(int senderId) {
         return friendshipRequestRepository.findBySenderId(senderId);
+    }
+
+    public void refreshUserFriendshipRequestsList(int userId) {
+        List<FriendshipRequest> friendshipRequests = getFriendshipRequestsByReceiverId(userId);
+        simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/friendshipRequests", friendshipRequests);
     }
 }
