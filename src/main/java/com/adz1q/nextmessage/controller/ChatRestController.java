@@ -35,6 +35,11 @@ public class ChatRestController {
         return chatService.getChat(chatId, userId);
     }
 
+    @GetMapping("/get/{firstUserId}/{secondUserId}")
+    public ResponseEntity<Object> getPrivateChatByMembers(@PathVariable int firstUserId, @PathVariable int secondUserId) {
+        return chatService.getPrivateChatByMembers(firstUserId, secondUserId);
+    }
+
     @GetMapping("/getAll/{userId}")
     public List<ChatService.ChatCard> getChats(@PathVariable int userId) {
         return chatService.getChatsByUserId(userId);

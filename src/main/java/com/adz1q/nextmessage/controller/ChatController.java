@@ -40,6 +40,5 @@ public class ChatController {
     public void getChatsByUserId(GetChatsByUserIdDTO getChatsDTO) {
         List<ChatService.ChatCard> chatCards = chatService.getChatsByUserId(getChatsDTO.userId);
         simpMessagingTemplate.convertAndSend("/topic/user/" + getChatsDTO.getUserId() + "/chats", chatCards);
-        System.out.println(chatCards);
     }
 }

@@ -283,6 +283,17 @@ public class ChatService {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
     }
 
+    public ResponseEntity<Object> getPrivateChatByMembers(int firstUserId, int secondUserId) {
+        Optional<Integer> optionalChatId = chatRepository.findPrivateChatByChatMembers(firstUserId, secondUserId);
+
+        if (optionalChatId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        int chatId = optionalChatId.get();
+        return ResponseEntity.ok(chatId);
+    }
+
     public List<ChatCard> getChatsByUserId(int userId) {
 //        Optional<User> optionalUser = userRepository.findById(userId);
 //
@@ -477,6 +488,9 @@ public class ChatService {
         chatMemberRepository.save(chatMemberOne);
         chatMemberRepository.save(chatMemberTwo);
 
+        refreshUserChatList(chatMemberOne.getUserId());
+        refreshUserChatList(chatMemberTwo.getUserId());
+
         return ResponseEntity.ok(privateChat);
     }
 
@@ -560,8 +574,6 @@ public class ChatService {
 
         return ResponseEntity.ok(teamChat);
     }
-
-    //changeTeamChatProfilePicture()
 
     public ResponseEntity<Object> deleteTeamChatProfilePicture(DeleteTeamChatProfilePictureRequestDto deleteTeamChatProfilePictureRequestDto) {
         Optional<User> optionalUser = userRepository.findById(deleteTeamChatProfilePictureRequestDto.getUserId());

@@ -125,4 +125,8 @@ public class FriendshipRequestService {
     public List<FriendshipRequest> getFriendshipRequests(int receiverId) {
         return friendshipRequestRepository.findByReceiverId(receiverId);
     }
+
+    public List<FriendshipRequest> getFriendshipRequestsBySenderId(int senderId) {
+        return friendshipRequestRepository.findBySenderId(senderId);
+    }
 }

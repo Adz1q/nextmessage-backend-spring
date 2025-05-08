@@ -37,4 +37,9 @@ public class FriendshipRequestController {
     public List<FriendshipRequest> getFriendshipRequests(@PathVariable int receiverId) {
         return friendshipRequestService.getFriendshipRequests(receiverId);
     }
+
+    @GetMapping("/getAllBySenderId/{senderId}")
+    public List<FriendshipRequest> getFriendshipRequestsBySenderId(@PathVariable int senderId) {
+        return friendshipRequestService.getFriendshipRequestsBySenderId(senderId);
+    }
 }

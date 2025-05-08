@@ -290,9 +290,6 @@ public class UserService {
         return ResponseEntity.ok(user);
     }
 
-    // changeProfilePicture()
-    // deleteProfilePicture()
-
     public ResponseEntity<Object> changeAllowMessagesFromNonFriends(ChangeMessagePreferencesRequestDto changeMessagePreferencesRequest) {
         Optional<User> optionalUser = userRepository.findById(changeMessagePreferencesRequest.getUserId());
 
