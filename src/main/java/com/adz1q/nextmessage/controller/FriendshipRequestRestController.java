@@ -28,13 +28,13 @@ public class FriendshipRequestRestController {
         return friendshipRequestService.acceptFriendshipRequest(acceptFriendshipRequestDto);
     }
 
-    @DeleteMapping("/reject")
-    public ResponseEntity<Object> rejectFriendshipRequest(@RequestBody FriendshipRequestService.RejectFriendshipRequestDto rejectFriendshipRequestDto) {
-        return friendshipRequestService.rejectFriendshipRequest(rejectFriendshipRequestDto);
+    @DeleteMapping("/reject/{senderId}/{receiverId}")
+    public ResponseEntity<Object> rejectFriendshipRequest(@PathVariable int senderId, @PathVariable int receiverId) {
+        return friendshipRequestService.rejectFriendshipRequest(senderId, receiverId);
     }
 
     @GetMapping("/getAll/{receiverId}")
-    public List<FriendshipRequest> getFriendshipRequests(@PathVariable int receiverId) {
+    public List<FriendshipRequestService.FriendshipRequestDTO> getFriendshipRequests(@PathVariable int receiverId) {
         return friendshipRequestService.getFriendshipRequestsByReceiverId(receiverId);
     }
 

@@ -31,7 +31,7 @@ public class FriendshipRequestController {
 
     @MessageMapping("/friendshipRequest.getFriendshipRequestsByUserId")
     public void getFriendshipRequestsByUserId(GetFriendshipRequestsByUserIdDTO getFriendshipRequestsByUserIdDTO) {
-        List<FriendshipRequest> friendshipRequests = friendshipRequestService.getFriendshipRequestsByReceiverId(getFriendshipRequestsByUserIdDTO.getUserId());
+        List<FriendshipRequestService.FriendshipRequestDTO> friendshipRequests = friendshipRequestService.getFriendshipRequestsByReceiverId(getFriendshipRequestsByUserIdDTO.getUserId());
         simpMessagingTemplate.convertAndSend("/topic/user/" + getFriendshipRequestsByUserIdDTO.getUserId() + "/friendshipRequests", friendshipRequests);
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +53,16 @@ public class FriendshipRequestService {
     public static class AcceptFriendshipRequestDto {
         private int senderId;
         private int receiverId;
+    }
+
+    @Data
+    public static class FriendshipRequestDTO {
+        private int id;
+        private int senderId;
+        private int receiverId;
+        private LocalDateTime date;
+        private String senderUsername;
+        private String senderProfilePictureUrl;
     }
 
     public ResponseEntity<Object> sendFriendshipRequest(SendFriendshipRequestDto sendFriendshipRequestDto) {
@@ -97,10 +108,10 @@ public class FriendshipRequestService {
         return ResponseEntity.ok().body("Friendship request sent!");
     }
 
-    public ResponseEntity<Object> rejectFriendshipRequest(RejectFriendshipRequestDto rejectFriendshipRequestDto) {
+    public ResponseEntity<Object> rejectFriendshipRequest(int senderId, int receiverId) {
         Optional<FriendshipRequest> optionalFriendshipRequest = friendshipRequestRepository.findBySenderIdAndReceiverId(
-                rejectFriendshipRequestDto.getSenderId(),
-                rejectFriendshipRequestDto.getReceiverId()
+                senderId,
+                receiverId
         );
 
         if (optionalFriendshipRequest.isEmpty()) {
@@ -110,10 +121,10 @@ public class FriendshipRequestService {
         FriendshipRequest friendshipRequest = optionalFriendshipRequest.get();
         friendshipRequestRepository.deleteById(friendshipRequest.getId());
 
-        refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getReceiverId());
+        refreshUserFriendshipRequestsList(receiverId);
 //        refreshUserFriendshipRequestsList(rejectFriendshipRequestDto.getSenderId()); //rejecting doesn't change the sender friendship requests list
-        chatService.refreshUserChatList(rejectFriendshipRequestDto.getReceiverId());
-        chatService.refreshUserChatList(rejectFriendshipRequestDto.getSenderId());
+        chatService.refreshUserChatList(receiverId);
+        chatService.refreshUserChatList(senderId);
 
         return ResponseEntity.ok().body("Friendship request rejected!");
     }
@@ -140,8 +151,31 @@ public class FriendshipRequestService {
         );
     }
 
-    public List<FriendshipRequest> getFriendshipRequestsByReceiverId(int receiverId) {
-        return friendshipRequestRepository.findByReceiverId(receiverId);
+    public List<FriendshipRequestDTO> getFriendshipRequestsByReceiverId(int receiverId) {
+        List<FriendshipRequest> friendshipRequests= friendshipRequestRepository.findByReceiverId(receiverId);
+        List<FriendshipRequestDTO> friendshipRequestDTOS = new ArrayList<>();
+
+        for (FriendshipRequest friendshipRequest : friendshipRequests) {
+            Optional<User> optionalUser = userRepository.findById(friendshipRequest.getSenderId());
+
+            if (optionalUser.isEmpty()) {
+                continue;
+            }
+
+            User user = optionalUser.get();
+            FriendshipRequestDTO friendshipRequestDTO = new FriendshipRequestDTO();
+
+            friendshipRequestDTO.setId(friendshipRequest.getId());
+            friendshipRequestDTO.setReceiverId(friendshipRequest.getReceiverId());
+            friendshipRequestDTO.setSenderId(user.getId());
+            friendshipRequestDTO.setSenderUsername(user.getUsername());
+            friendshipRequestDTO.setSenderProfilePictureUrl(user.getProfilePictureUrl());
+            friendshipRequestDTO.setDate(friendshipRequest.getDate());
+
+            friendshipRequestDTOS.add(friendshipRequestDTO);
+        }
+
+        return friendshipRequestDTOS;
     }
 
     public List<FriendshipRequest> getFriendshipRequestsBySenderId(int senderId) {
@@ -149,7 +183,7 @@ public class FriendshipRequestService {
     }
 
     public void refreshUserFriendshipRequestsList(int userId) {
-        List<FriendshipRequest> friendshipRequests = getFriendshipRequestsByReceiverId(userId);
+        List<FriendshipRequestDTO> friendshipRequests = getFriendshipRequestsByReceiverId(userId);
         simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/friendshipRequests", friendshipRequests);
     }
 }
