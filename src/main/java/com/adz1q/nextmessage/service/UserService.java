@@ -1,11 +1,9 @@
 package com.adz1q.nextmessage.service;
 
+import com.adz1q.nextmessage.model.*;
 import com.adz1q.nextmessage.repository.*;
 import lombok.Data;
 
-import com.adz1q.nextmessage.model.FriendshipMember;
-import com.adz1q.nextmessage.model.FriendshipRequest;
-import com.adz1q.nextmessage.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +25,8 @@ public class UserService {
     private final FriendshipMemberRepository friendshipMemberRepository;
     private final FriendshipRequestRepository friendshipRequestRepository;
     private final FriendshipRepository friendshipRepository;
+    private final ChatRepository chatRepository;
+    private final MessageRepository messageRepository;
 
     @Autowired
     public UserService(
@@ -36,8 +36,8 @@ public class UserService {
             ChatMemberRepository chatMemberRepository,
             FriendshipMemberRepository friendshipMemberRepository,
             FriendshipRequestRepository friendshipRequestRepository,
-            FriendshipRepository friendshipRepository
-    ) {
+            FriendshipRepository friendshipRepository,
+            ChatRepository chatRepository, MessageRepository messageRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -45,6 +45,8 @@ public class UserService {
         this.friendshipMemberRepository = friendshipMemberRepository;
         this.friendshipRequestRepository = friendshipRequestRepository;
         this.friendshipRepository = friendshipRepository;
+        this.chatRepository = chatRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Data
@@ -89,12 +91,6 @@ public class UserService {
     }
 
     @Data
-    public static class DeleteAccountRequestDto {
-        private int userId;
-        private String password;
-    }
-
-    @Data
     public static class FoundUser {
         private int id;
         private String username;
@@ -106,7 +102,7 @@ public class UserService {
     public String generateProfilePictureUrl(String name) {
         String firstLetter = name.substring(0, 1).toUpperCase();
 
-        String profilePictureUrl = switch (firstLetter) {
+        return switch (firstLetter) {
             case "A" -> "/profile-pictures/profile_picture_a.png";
             case "B" -> "/profile-pictures/profile_picture_b.png";
             case "C" -> "/profile-pictures/profile_picture_c.png";
@@ -135,8 +131,6 @@ public class UserService {
             case "Z" -> "/profile-pictures/profile_picture_z.png";
             default -> "/profile-pictures/profile_picture_default.png";
         };
-
-        return profilePictureUrl;
     }
 
     public ResponseEntity<Object> register(RegisterRequestDto registerRequest) {
@@ -173,7 +167,6 @@ public class UserService {
 
         User user = new User();
         String encodedPassword = passwordEncoder.encode(password);
-        String profilePictureUrl;
         LocalDateTime currentTime = LocalDateTime.now();
         boolean defaultAllowMessagesFromNonFriends = true;
 
@@ -315,8 +308,8 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<Object> deleteAccount(DeleteAccountRequestDto deleteAccountRequest) {
-        Optional<User> optionalUser = userRepository.findById(deleteAccountRequest.getUserId());
+    public ResponseEntity<Object> deleteAccount(int userId, String password) {
+        Optional<User> optionalUser = userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
@@ -324,12 +317,12 @@ public class UserService {
 
         User user = optionalUser.get();
 
-        if (!passwordEncoder.matches(deleteAccountRequest.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
         }
 
         List<Integer> friendshipIds = new ArrayList<>();
-        List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByUserId(deleteAccountRequest.getUserId());
+        List<FriendshipMember> friendshipMembers = friendshipMemberRepository.findByUserId(userId);
 
         for (FriendshipMember friendshipMember : friendshipMembers) {
             friendshipIds.add(friendshipMember.getFriendshipId());
@@ -341,8 +334,8 @@ public class UserService {
         }
 
         List<Integer> friendshipRequestIds = new ArrayList<>();
-        List<FriendshipRequest> friendshipRequestsByReceiverId = friendshipRequestRepository.findByReceiverId(deleteAccountRequest.getUserId());
-        List<FriendshipRequest> friendshipRequestsBySenderId = friendshipRequestRepository.findBySenderId(deleteAccountRequest.getUserId());
+        List<FriendshipRequest> friendshipRequestsByReceiverId = friendshipRequestRepository.findByReceiverId(userId);
+        List<FriendshipRequest> friendshipRequestsBySenderId = friendshipRequestRepository.findBySenderId(userId);
 
         for (FriendshipRequest friendshipRequest : friendshipRequestsByReceiverId) {
             friendshipRequestIds.add(friendshipRequest.getId());
@@ -356,8 +349,30 @@ public class UserService {
             friendshipRequestRepository.deleteById(friendshipRequestId);
         }
 
-        chatMemberRepository.deleteByUserId(deleteAccountRequest.getUserId());
-        userRepository.deleteById(deleteAccountRequest.getUserId());
+        List<Integer> chatIds = new ArrayList<>();
+        List<ChatMember> chatMembers = chatMemberRepository.findByUserId(userId);
+
+        for (ChatMember chatMember : chatMembers) {
+            chatIds.add(chatMember.getChatId());
+        }
+
+        for (int chatId : chatIds) {
+            chatMemberRepository.deleteByChatId(chatId);
+            chatRepository.deleteById(chatId);
+        }
+
+        List<Integer> messageIds = new ArrayList<>();
+        List<Message> messages = messageRepository.findBySenderId(userId);
+
+        for (Message message : messages) {
+            messageIds.add(message.getId());
+        }
+
+        for (int messageId : messageIds) {
+            messageRepository.deleteById(messageId);
+        }
+
+        userRepository.deleteById(userId);
 
         return ResponseEntity.ok("Account deleted");
     }

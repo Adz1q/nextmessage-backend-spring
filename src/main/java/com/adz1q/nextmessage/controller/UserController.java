@@ -47,9 +47,9 @@ public class UserController {
         return userService.changeAllowMessagesFromNonFriends(changeMessagePreferencesRequest);
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<Object> deleteAccount(@RequestBody UserService.DeleteAccountRequestDto deleteAccountRequest) {
-        return userService.deleteAccount(deleteAccountRequest);
+    @DeleteMapping("/delete/{userId}/{password}")
+    public ResponseEntity<Object> deleteAccount(@PathVariable int userId, @PathVariable String password) {
+        return userService.deleteAccount(userId, password);
     }
 
     @GetMapping("search/{username}")
