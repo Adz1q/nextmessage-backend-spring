@@ -82,8 +82,6 @@ public class ChatRestController {
         return chatService.changeTeamChatName(changeTeamChatNameRequestDto);
     }
 
-    //changeTeamChatProfilePicture
-
     @DeleteMapping("/delete/profilePicture")
     public ResponseEntity<Object> deleteTeamChatProfilePicture(
             @RequestBody ChatService.DeleteTeamChatProfilePictureRequestDto deleteTeamChatProfilePictureRequestDto

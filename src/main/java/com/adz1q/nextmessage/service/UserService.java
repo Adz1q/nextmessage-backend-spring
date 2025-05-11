@@ -349,16 +349,11 @@ public class UserService {
             friendshipRequestRepository.deleteById(friendshipRequestId);
         }
 
-        List<Integer> chatIds = new ArrayList<>();
-        List<ChatMember> chatMembers = chatMemberRepository.findByUserId(userId);
+        List<Integer> privateChatIds = chatRepository.findPrivateChatsByChatMember(userId);
 
-        for (ChatMember chatMember : chatMembers) {
-            chatIds.add(chatMember.getChatId());
-        }
-
-        for (int chatId : chatIds) {
-            chatMemberRepository.deleteByChatId(chatId);
-            chatRepository.deleteById(chatId);
+        for (int privateChatId : privateChatIds) {
+            chatMemberRepository.deleteByChatId(privateChatId);
+            chatRepository.deleteById(privateChatId);
         }
 
         List<Integer> messageIds = new ArrayList<>();

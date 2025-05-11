@@ -546,8 +546,8 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
-        if (name.isEmpty() || name.length() > 12) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 12 characters");
+        if (name.isEmpty() || name.length() > 16) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 16 characters");
         }
 
         TeamChat teamChat = new TeamChat();
@@ -565,6 +565,7 @@ public class ChatService {
         chatMember.setUserId(adminId);
 
         chatMemberRepository.save(chatMember);
+        refreshUserChatList(adminId);
 
         for (int memberId : memberIds) {
             Optional<User> optionalMember = userRepository.findById(memberId);
@@ -578,6 +579,7 @@ public class ChatService {
             newChatMember.setUserId(memberId);
 
             chatMemberRepository.save(newChatMember);
+            refreshUserChatList(memberId);
         }
 
         return ResponseEntity.ok(teamChat);
@@ -602,8 +604,8 @@ public class ChatService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not the admin of this chat");
         }
 
-        if (changeTeamChatRequestDto.getName().isEmpty() || changeTeamChatRequestDto.getName().length() > 12) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 12 characters");
+        if (changeTeamChatRequestDto.getName().isEmpty() || changeTeamChatRequestDto.getName().length() > 16) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Name must be between 1 and 16 characters");
         }
 
         teamChat.setName(changeTeamChatRequestDto.getName());
