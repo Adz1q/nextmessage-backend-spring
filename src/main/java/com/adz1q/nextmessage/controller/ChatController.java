@@ -1,6 +1,7 @@
 package com.adz1q.nextmessage.controller;
 
 import com.adz1q.nextmessage.model.ChatMessage;
+import com.adz1q.nextmessage.repository.TeamChatRepository;
 import com.adz1q.nextmessage.service.ChatService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +20,24 @@ public class ChatController {
     public ChatController(
             SimpMessagingTemplate simpMessagingTemplate,
             ChatService chatService
-    ) {
+            ) {
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.chatService = chatService;
     }
 
     @Data
     public static class GetChatsByUserIdDTO {
+        private int userId;
+    }
+
+    @Data
+    public static class GetTeamChatDTO {
+        private int chatId;
+    }
+
+    @Data
+    public static class GetTeamChatMembersDTO {
+        private int chatId;
         private int userId;
     }
 
@@ -40,5 +52,15 @@ public class ChatController {
     public void getChatsByUserId(GetChatsByUserIdDTO getChatsDTO) {
         List<ChatService.ChatCard> chatCards = chatService.getChatsByUserId(getChatsDTO.userId);
         simpMessagingTemplate.convertAndSend("/topic/user/" + getChatsDTO.getUserId() + "/chats", chatCards);
+    }
+
+    @MessageMapping("/chat.getTeamChat")
+    public void getTeamChat(GetTeamChatDTO getTeamChatDTO) {
+        chatService.refreshTeamChat(getTeamChatDTO.getChatId());
+    }
+
+    @MessageMapping("/chat.getTeamChatMembers")
+    public void getTeamChatMembers(GetTeamChatMembersDTO getTeamChatMembersDTO) {
+        chatService.refreshChatMembers(getTeamChatMembersDTO.getChatId(), getTeamChatMembersDTO.getUserId());
     }
 }

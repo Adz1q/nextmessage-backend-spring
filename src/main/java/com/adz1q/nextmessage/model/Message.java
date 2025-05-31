@@ -16,6 +16,7 @@ public class Message {
 
     private int chatId;
     private int senderId;
+    private String senderUsername;
     private String content;
     private SecretKey secretKey;
 

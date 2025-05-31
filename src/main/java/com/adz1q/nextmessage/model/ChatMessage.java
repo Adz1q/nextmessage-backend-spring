@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class ChatMessage {
     private int chatId;
     private int senderId;
+    private String senderUsername;
     private String content;
     private LocalDateTime date;
     private SecretKey secretKey;

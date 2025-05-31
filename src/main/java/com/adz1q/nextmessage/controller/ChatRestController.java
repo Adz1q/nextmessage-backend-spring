@@ -103,17 +103,20 @@ public class ChatRestController {
         return chatService.addTeamChatMember(addTeamChatMemberRequestDto);
     }
 
-    @DeleteMapping("/remove/member")
+    @DeleteMapping("/remove/{chatId}/member/{memberId}")
     public ResponseEntity<Object> removeTeamChatMember(
-            @RequestBody ChatService.RemoveTeamChatMemberRequestDto removeTeamChatMemberRequestDto
+            @PathVariable int chatId,
+            @PathVariable int memberId,
+            @RequestParam int adminId
     ) {
-        return chatService.removeTeamChatMember(removeTeamChatMemberRequestDto);
+        return chatService.removeTeamChatMember(chatId, memberId, adminId);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{chatId}")
     public ResponseEntity<Object> deleteTeamChat(
-            @RequestBody ChatService.DeleteTeamChatRequestDto deleteTeamChatRequestDto
+            @PathVariable int chatId,
+            @RequestParam int userId
     ) {
-        return chatService.deleteTeamChat(deleteTeamChatRequestDto);
+        return chatService.deleteTeamChat(chatId, userId);
     }
 }
