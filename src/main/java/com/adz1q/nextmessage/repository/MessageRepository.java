@@ -13,4 +13,7 @@ public interface MessageRepository extends JpaRepository<Message, Integer> {
     void deleteByChatId(int chatId);
 
     List<Message> findBySenderId(int senderId);
+
+    @Query(value="DELETE FROM message WHERE chat_id = :chatId AND senderId = :senderId", nativeQuery = true)
+    void deleteByChatIdAndSenderId(@Param("chatId") int chatId, @Param("senderId") int senderId);
 }

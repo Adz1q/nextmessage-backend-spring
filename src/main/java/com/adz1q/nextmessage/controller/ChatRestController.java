@@ -98,9 +98,9 @@ public class ChatRestController {
 
     @PostMapping("/add/member")
     public ResponseEntity<Object> addTeamChatMember(
-            @RequestBody ChatService.AddTeamChatMemberRequestDto addTeamChatMemberRequestDto
+            @RequestBody ChatService.AddTeamChatMembersRequestDto addTeamChatMembersRequestDto
     ) {
-        return chatService.addTeamChatMember(addTeamChatMemberRequestDto);
+        return chatService.addTeamChatMembers(addTeamChatMembersRequestDto);
     }
 
     @DeleteMapping("/remove/{chatId}/member/{memberId}")
@@ -118,5 +118,21 @@ public class ChatRestController {
             @RequestParam int userId
     ) {
         return chatService.deleteTeamChat(chatId, userId);
+    }
+
+    @DeleteMapping("/{chatId}/leave")
+    public ResponseEntity<Object> leaveTeamChat(
+            @PathVariable int chatId,
+            @RequestParam int userId
+    ) {
+        return chatService.leaveTeamChat(chatId, userId);
+    }
+
+    @GetMapping("/{chatId}/isMember")
+    public boolean isMemberOfChat(
+            @PathVariable int chatId,
+            @RequestParam int userId
+    ) {
+        return  chatService.isMemberOfChat(chatId, userId);
     }
 }

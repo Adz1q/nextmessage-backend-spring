@@ -1,7 +1,6 @@
 package com.adz1q.nextmessage.repository;
 
 import com.adz1q.nextmessage.model.Chat;
-import com.adz1q.nextmessage.model.ChatMember;
 import com.adz1q.nextmessage.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

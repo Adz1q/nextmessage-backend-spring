@@ -1,6 +1,5 @@
 package com.adz1q.nextmessage.controller;
 
-import com.adz1q.nextmessage.model.FriendshipRequest;
 import com.adz1q.nextmessage.service.FriendshipRequestService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;

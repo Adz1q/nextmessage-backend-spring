@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -123,10 +122,10 @@ public class ChatService {
     }
 
     @Data
-    public static class AddTeamChatMemberRequestDto {
+    public static class AddTeamChatMembersRequestDto {
         private int chatId;
         private int userId;
-        private int newMemberId;
+        private List<Integer> newMemberIds;
     }
 
     @Data
@@ -472,7 +471,6 @@ public class ChatService {
 
         Optional<Integer> friendshipId = friendshipRepository.findFriendshipByUsers(userId, otherUser.getId());
 
-        System.out.println(friendshipId);
         if (!friendshipId.isEmpty()) {
             otherChatMemberDto.setFriend(true);
         }
@@ -674,13 +672,13 @@ public class ChatService {
 
         teamChatRepository.save(teamChat);
 
+        refreshTeamChat(changeTeamChatRequestDto.getChatId());
+
         List<ChatMember> chatMembers = chatMemberRepository.findByChatId(changeTeamChatRequestDto.getChatId());
 
         for (ChatMember chatMember : chatMembers) {
             refreshUserChatList(chatMember.getUserId());
         }
-
-        refreshTeamChat(changeTeamChatRequestDto.getChatId());
 
         return ResponseEntity.ok(teamChat);
     }
@@ -766,47 +764,58 @@ public class ChatService {
 
         teamChatRepository.save(teamChat);
 
+        refreshChatMembers(changeTeamChatAdminRequestDto.getChatId(), changeTeamChatAdminRequestDto.getUserId());
+        refreshTeamChat(changeTeamChatAdminRequestDto.getChatId());
+
         List<ChatMember> chatMembers = chatMemberRepository.findByChatId(changeTeamChatAdminRequestDto.getChatId());
 
         for (ChatMember chatMember : chatMembers) {
             refreshUserChatList(chatMember.getUserId());
         }
 
-        refreshChatMembers(changeTeamChatAdminRequestDto.getChatId(), changeTeamChatAdminRequestDto.getUserId());
-        refreshTeamChat(changeTeamChatAdminRequestDto.getChatId());
-
         return ResponseEntity.ok(teamChat);
     }
 
-    public ResponseEntity<Object> addTeamChatMember(AddTeamChatMemberRequestDto addTeamChatMemberRequestDto) {
-        Optional<User> optionalUser = userRepository.findById(addTeamChatMemberRequestDto.getUserId());
+    public ResponseEntity<Object> addTeamChatMembers(AddTeamChatMembersRequestDto addTeamChatMembersRequestDto) {
+        Optional<User> optionalUser = userRepository.findById(addTeamChatMembersRequestDto.getUserId());
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
-        Optional<User> optionalNewMember = userRepository.findById(addTeamChatMemberRequestDto.getNewMemberId());
-
-        if (optionalNewMember.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New member not found");
-        }
-
-        Optional<TeamChat> optionalTeamChat = teamChatRepository.findById(addTeamChatMemberRequestDto.getChatId());
+        Optional<TeamChat> optionalTeamChat = teamChatRepository.findById(addTeamChatMembersRequestDto.getChatId());
 
         if (optionalTeamChat.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
         }
 
-        Optional<ChatMember> optionalChatMemberUser = chatMemberRepository.findByUserIdAndChatId(addTeamChatMemberRequestDto.getUserId(), addTeamChatMemberRequestDto.getChatId());
+        Optional<ChatMember> optionalChatMemberUser = chatMemberRepository.findByUserIdAndChatId(addTeamChatMembersRequestDto.getUserId(), addTeamChatMembersRequestDto.getChatId());
 
         if (optionalChatMemberUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not a member of this chat");
         }
 
-        Optional<ChatMember> optionalChatMemberNewMember = chatMemberRepository.findByUserIdAndChatId(addTeamChatMemberRequestDto.getNewMemberId(), addTeamChatMemberRequestDto.getChatId());
+        List<Integer> newMemberIds = addTeamChatMembersRequestDto.getNewMemberIds();
 
-        if (!optionalChatMemberNewMember.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New member is already a member of this chat");
+        for (int memberId : newMemberIds) {
+            Optional<User> optionalMember = userRepository.findById(memberId);
+
+            if (optionalMember.isEmpty()) {
+                continue;
+            }
+
+            Optional<ChatMember> optionalChatMemberNewMember = chatMemberRepository.findByUserIdAndChatId(memberId, addTeamChatMembersRequestDto.getChatId());
+
+            if (!optionalChatMemberNewMember.isEmpty()) {
+                continue;
+            }
+
+            ChatMember newChatMember = new ChatMember();
+            newChatMember.setChatId(addTeamChatMembersRequestDto.getChatId());
+            newChatMember.setUserId(memberId);
+
+            chatMemberRepository.save(newChatMember);
+            refreshUserChatList(memberId);
         }
 
         TeamChat teamChat = optionalTeamChat.get();
@@ -815,23 +824,16 @@ public class ChatService {
 
         teamChatRepository.save(teamChat);
 
-        ChatMember chatMember = new ChatMember();
+        refreshChatMembers(addTeamChatMembersRequestDto.getChatId(), addTeamChatMembersRequestDto.getUserId());
+        refreshTeamChat(addTeamChatMembersRequestDto.getChatId());
 
-        chatMember.setChatId(addTeamChatMemberRequestDto.getChatId());
-        chatMember.setUserId(addTeamChatMemberRequestDto.getNewMemberId());
+        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(addTeamChatMembersRequestDto.getChatId());
 
-        chatMemberRepository.save(chatMember);
-
-        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(addTeamChatMemberRequestDto.getChatId());
-
-        for (ChatMember chatMemberToNotify : chatMembers) {
-            refreshUserChatList(chatMemberToNotify.getUserId());
+        for (ChatMember chatMember : chatMembers) {
+            refreshUserChatList(chatMember.getUserId());
         }
 
-        refreshChatMembers(addTeamChatMemberRequestDto.getChatId(), addTeamChatMemberRequestDto.getUserId());
-        refreshTeamChat(addTeamChatMemberRequestDto.getChatId());
-
-        return ResponseEntity.ok(chatMember);
+        return ResponseEntity.ok("Chat members added");
     }
 
     public ResponseEntity<Object> removeTeamChatMember(int chatId, int memberId, int adminId) {
@@ -876,21 +878,19 @@ public class ChatService {
         }
 
         ChatMember chatMember = optionalChatMemberMember.get();
-
         chatMemberRepository.delete(chatMember);
 
         teamChat.setLastUpdated(LocalDateTime.now());
-
         teamChatRepository.save(teamChat);
+
+        refreshChatMembers(chatId, adminId);
+        refreshTeamChat(chatId);
 
         List<ChatMember> chatMembers = chatMemberRepository.findByChatId(chatId);
 
         for (ChatMember chatMemberToNotify : chatMembers) {
             refreshUserChatList(chatMemberToNotify.getUserId());
         }
-
-        refreshChatMembers(chatId, adminId);
-        refreshTeamChat(chatId);
 
         return ResponseEntity.ok("Member removed");
     }
@@ -927,6 +927,64 @@ public class ChatService {
 
         return ResponseEntity.ok("Chat deleted");
     }
-}
 
-// leave chat must have giving admin permission to a random chat member
+    @Transactional
+    public ResponseEntity<Object> leaveTeamChat(int chatId, int userId) {
+        Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
+
+        if (optionalChatMember.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User is not a member of this chat");
+        }
+
+        List<ChatMember> chatMembers = chatMemberRepository.findByChatId(chatId);
+
+        chatMemberRepository.deleteByChatIdAndUserId(chatId, userId);
+
+        Optional<TeamChat> optionalTeamChat = teamChatRepository.findById(chatId);
+
+        if (optionalTeamChat.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Chat not found");
+        }
+
+        TeamChat teamChat = optionalTeamChat.get();
+
+        if (userId == teamChat.getAdminId()) {
+            Optional<Integer> optionalNewAdminId = chatMemberRepository.findByChatIdAndNotUserId(chatId, userId);
+
+            if (optionalNewAdminId.isEmpty()) {
+                deleteTeamChat(chatId, teamChat.getAdminId());
+
+                for (ChatMember chatMember : chatMembers) {
+                    refreshUserChatList(chatMember.getUserId());
+                }
+
+                return ResponseEntity.ok("There were no other member, so chat got deleted");
+            }
+
+            int newAdminId = optionalNewAdminId.get();
+            teamChat.setAdminId(newAdminId);
+        }
+
+        teamChat.setLastUpdated(LocalDateTime.now());
+        teamChatRepository.save(teamChat);
+
+        refreshChatMembers(chatId, userId);
+        refreshTeamChat(chatId);
+
+        for (ChatMember chatMember : chatMembers) {
+            refreshUserChatList(chatMember.getUserId());
+        }
+
+        return ResponseEntity.ok("Successfully left the chat");
+    }
+
+    public boolean isMemberOfChat(int chatId, int userId) {
+        Optional<ChatMember> optionalChatMember = chatMemberRepository.findByUserIdAndChatId(userId, chatId);
+
+        if (optionalChatMember.isEmpty()) {
+            return false;
+        }
+
+        return true;
+    }
+}

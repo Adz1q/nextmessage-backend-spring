@@ -1,7 +1,6 @@
 package com.adz1q.nextmessage.controller;
 
 import com.adz1q.nextmessage.model.ChatMessage;
-import com.adz1q.nextmessage.repository.TeamChatRepository;
 import com.adz1q.nextmessage.service.ChatService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
