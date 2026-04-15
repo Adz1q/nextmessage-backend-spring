@@ -1,9 +1,11 @@
 package com.adz1q.nextmessage.service;
 
-import com.adz1q.nextmessage.model.*;
+import com.adz1q.nextmessage.model.FriendshipMember;
+import com.adz1q.nextmessage.model.FriendshipRequest;
+import com.adz1q.nextmessage.model.Message;
+import com.adz1q.nextmessage.model.User;
 import com.adz1q.nextmessage.repository.*;
 import lombok.Data;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

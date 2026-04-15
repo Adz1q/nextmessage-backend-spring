@@ -1,10 +1,10 @@
 package com.adz1q.nextmessage.service;
 
-import lombok.Data;
 import com.adz1q.nextmessage.model.FriendshipRequest;
 import com.adz1q.nextmessage.model.User;
 import com.adz1q.nextmessage.repository.FriendshipRequestRepository;
 import com.adz1q.nextmessage.repository.UserRepository;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

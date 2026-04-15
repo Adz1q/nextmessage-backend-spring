@@ -1,6 +1,7 @@
 package com.adz1q.nextmessage.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 @Data
